@@ -85,6 +85,7 @@ The goal is to build an automated, maintainable, and scalable pipeline that ensu
 
 ## Tech Stack
 
+- **Containerization:** Docker (for creating, deploying, and running applications in containers, ensuring consistency across environments)
 - **Programming Language:** Python
 - **Libraries:** `requests`, `pandas`, `sqlalchemy`, `psycopg2`, `pyarrow`
 - **Orchestration:** Apache Airflow / Cron Jobs
