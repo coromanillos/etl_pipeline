@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: my_python_app
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:mysecretpassword@db:5432/mydatabase
+    volumes:
+      - .:/app
+    command: ["python", "main.py"]
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
