@@ -18,9 +18,9 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER} # Using the variable from .env file
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # Using the variable from .env file
-      POSTGRES_DB: ${POSTGRES_DB} # Using the variable from .env file
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
