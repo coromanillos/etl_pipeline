@@ -125,9 +125,6 @@ The goal is to build an automated, maintainable, and scalable pipeline that ensu
 
 ## Contributors
 
-- **[Your Name]** - Data Engineer
+- **[Christopher Romanillos]** - Data Engineer
 - **Savings Bank IT Team**
 
----
-
-This project is a prototype for internal use by the Savings Bank. Contact the IT department for questions and support.
