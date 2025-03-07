@@ -3,11 +3,12 @@ version: "3.8"
 services:
   app:
     build: .
-    container_name: my_python_app
+    container_name: etl_data_pipeline
     depends_on:
       - db
+      - airflow
     environment:
-      - DATABASE_URL=postgresql://postgres:mysecretpassword@db:5432/mydatabase
+      - DATABASE_URL=${DATABASE_URL} # Using the variable from .env file
     volumes:
       - .:/app
     command: ["python", "main.py"]
@@ -25,5 +26,20 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  airflow:
+    image: apache/airflow:2.5.0
+    container_name: airflow_scheduler
+    restart: always
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=${AIRFLOW_EXECUTOR} # Using the variable from .env file
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=${AIRFLOW_SQL_ALCHEMY_CONN} # Using the variable from .env file
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - airflow_data:/opt/airflow
+
 volumes:
   pg_data:
+  airflow_data:
