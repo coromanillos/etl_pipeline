@@ -2,11 +2,9 @@
 
 ## Project Overview
 
-A savings bank employer has tasked you with designing a data pipeline that extracts data from multiple sources, performs ETL/ELT tasks to clean and process the data, and uploads new records weekly to a cloud data warehouse. The extracted data comes from the following sources:
+A savings bank employer has tasked you with designing a data pipeline that extracts data from multiple sources, performs ETL tasks to clean and process the data, and uploads new records weekly to a cloud data warehouse. The extracted data comes from the following source:
 
-- **Two REST APIs** (one returning CSV data, the other returning JSON data)
-- **A CSV file** (internal transactional data)
-- **A JSON file** (customer metadata)
+- **Alpha Vantage REST API**
 
 The goal is to build an automated, maintainable, and scalable pipeline that ensures data integrity and consistency.
 
@@ -15,10 +13,7 @@ The goal is to build an automated, maintainable, and scalable pipeline that ensu
 ### Functional Requirements
 
 - Extract data from:
-  - API 1 (CSV format)
-  - API 2 (JSON format)
-  - Internal CSV file
-  - Internal JSON file
+  - API (JSON format)
 - Transform and clean the data:
   - Handle missing or incorrect values
   - Normalize and structure data consistently
@@ -127,4 +122,3 @@ The goal is to build an automated, maintainable, and scalable pipeline that ensu
 
 - **[Christopher Romanillos]** - Data Engineer
 - **Savings Bank IT Team**
-
