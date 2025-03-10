@@ -1,0 +1,6 @@
+# requirements.txt
+
+sqlalchemy
+python-dotenv
+requests
+pyyaml

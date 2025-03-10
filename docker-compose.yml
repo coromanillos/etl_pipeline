@@ -11,10 +11,10 @@ services:
       - DATABASE_URL=${DATABASE_URL} # Using the variable from .env file
     volumes:
       - .:/app
-    command: ["python", "main.py"]
+    command: ["sh", "-c", "wait-for-it db:5432 -- python main.py"]
 
   db:
-    image: postgres:15
+    image: postgres:16
     container_name: postgres_db
     restart: always
     environment:
@@ -27,7 +27,7 @@ services:
       - pg_data:/var/lib/postgresql/data
 
   airflow:
-    image: apache/airflow:2.5.0
+    image: apache/airflow:2.10.5
     container_name: airflow_scheduler
     restart: always
     environment:
