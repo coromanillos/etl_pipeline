@@ -1,0 +1,31 @@
+# Configuration settings utilized via python.
+
+api:
+  endpoint: https://www.alphavantage.co/query
+  key: your_api_key
+  timeout: 30 # in seconds
+  symbol: IBM
+  interval: 5min
+
+# Validation rules
+validation:
+  alpha_vantage_intraday:
+    required_keys:
+      - endpoint
+      - key
+      - timeout
+      - symbol
+      - interval
+
+directories:
+  raw_data: "../data/raw_data"
+  processed_data: "../data/processed_data"
+
+log_file: "../logs/data_processing.log"
+
+required_fields:
+  - "1. open"
+  - "2. high"
+  - "3. low"
+  - "4. close"
+  - "5. volume"
