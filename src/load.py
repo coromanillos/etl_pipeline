@@ -1,46 +1,27 @@
 ##############################################
-# Title: Main data loading script
+# Title: Data Loading Script
 # Author: Christopher Romanillos
-# Description: validates and loads cleaned
-# and transformed data to data lake.
-# ! ASSUMES DATABASE FROM POSTGRES_DATABAS_URL 
-# ALREADY EXISTS. MAKE MANUALLY OR VIA SCRIPT !
+# Description: Validates and loads cleaned and 
+# transformed data to data lake.
+# Assumes the database from POSTGRES_DATABASE_URL
+# already exists.
 # Date: 12/08/24
-# Version: 1.0
+# Version: 1.3
 ##############################################
-import os
+
+# data_load.py
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-from dotenv import load_dotenv
 from utils.utils import setup_logging
 from schema import IntradayData
 from utils.file_handler import get_latest_file
+from db_connection import get_db_session  # Import the function to get a database session
 
-# Set your PostgreSQL database URL
-load_dotenv()
-
-# Get the database URL from env variables.
-DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL") 
-if not DATABASE_URL:
-    logging.error("DATABASE_URL is not set in the environment variables.")
-    exit(1) 
-
-# Set up logging
+# Setup logging
 log_file = Path(__file__).resolve().parent.parent / 'logs' / 'data_load.log'
-setup_logging(log_file) 
-
-# Set up database connection
-try:
-    engine = create_engine(DATABASE_URL)
-    Session = sessionmaker(bind=engine)
-    logging.info("Database connection established successfully.")
-except Exception as e:
-    logging.error(f"Failed to create database engine: {e}")
-    exit(1)
+setup_logging(log_file)
 
 def load_data():
     """Load processed JSON data into the database."""
@@ -84,14 +65,15 @@ def load_data():
                     low=float(record['low']),
                     close=float(record['close']),
                     volume=int(record['volume']),
-                    created_at=datetime.utcnow() 
+                    created_at=datetime.utcnow()
                 )
             )
         except Exception as e:
             logging.warning(f"Failed to process record: {record}, error: {e}")
-        
+
     # Bulk insert and handle database errors
     try:
+        Session = get_db_session()  # Get the session from the new function
         with Session() as session:
             session.bulk_save_objects(new_records)
             session.commit()
