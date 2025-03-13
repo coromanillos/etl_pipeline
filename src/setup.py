@@ -9,7 +9,7 @@
 import logging
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from schema import Base 
+from utils.schema import Base 
 from dotenv import load_dotenv
 import os 
 from pathlib import Path

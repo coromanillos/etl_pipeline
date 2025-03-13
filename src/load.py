@@ -15,9 +15,9 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from utils.utils import setup_logging
-from schema import IntradayData
+from utils.schema import IntradayData
 from utils.file_handler import get_latest_file
-from db_connection import get_db_session  # Import the function to get a database session
+from utils.db_connection import get_db_session  # Import the function to get a database session
 
 # Setup logging
 log_file = Path(__file__).resolve().parent.parent / 'logs' / 'data_load.log'
