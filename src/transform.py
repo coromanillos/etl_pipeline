@@ -15,8 +15,8 @@ from utils.utils import setup_logging, load_config
 from utils.file_handler import get_latest_file, save_processed_data
 from utils.data_validation import transform_and_validate_data
 
-# Global variable for configuration
-config = None
+# Load configuration
+config = load_config("../config/config.yaml")
 
 def initialize_pipeline(config_path="../config/config.yaml"):
     """
