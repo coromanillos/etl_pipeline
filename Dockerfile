@@ -1,19 +1,24 @@
-# Use a lightweight Python image
-FROM python:3.9-slim
+# Build Stage
+FROM python:3.9-slim AS build
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Upgrade pip and install dependencies efficiently
-COPY requirements.txt .  
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Copy only the requirements.txt to leverage Docker caching
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Runtime Stage
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy only the necessary files from the build stage
+COPY --from=build /app /app
 
 # Copy the rest of the application code
 COPY . .
-
-# Ensure main.py is executable (optional)
-RUN chmod +x main.py
 
 # Set the default command to run the application
 CMD ["python", "main.py"]
