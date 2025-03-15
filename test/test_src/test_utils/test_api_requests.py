@@ -7,12 +7,22 @@
 ##############################################
 import requests
 import logging
+import sys
+
+# Set up logging to console (stdout)
+logging.basicConfig(
+    level=logging.INFO,  # You can change the level to DEBUG for more detailed logs
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    stream=sys.stdout  # Logs will go to stdout by default
+)
 
 def fetch_api_data(url, timeout):
     """Send a GET request to the API and return the data."""
     try:
+        logging.info(f"Sending request to {url} with timeout {timeout} seconds")
         response = requests.get(url, timeout=timeout)
         response.raise_for_status()
+        logging.info("Request successful")
         return response.json()
     except requests.exceptions.Timeout:
         logging.error(f"Request timed out after {timeout} seconds.")
