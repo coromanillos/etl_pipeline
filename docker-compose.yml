@@ -11,6 +11,8 @@ services:
     volumes:
       - .:/app
     command: ["sh", "-c", "wait-for-it db:5432 -- python main.py"]
+    logging:
+      driver: "json-file"
 
   db:
     image: postgres:16

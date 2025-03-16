@@ -7,6 +7,7 @@
 ##############################################
 
 import logging
+import sys
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from utils.schema import Base 

@@ -6,9 +6,19 @@
 # Date: 11/23/24
 # Version: 1.0
 ##############################################
-from sqlalchemy import Column, Integer, BigInteger, Float, DateTime
+
+import logging
+import sys
+from sqlalchemy import Column, BigInteger, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+
+# Configure logging for Docker compatibility (stdout)
+logging.basicConfig(
+    level=logging.INFO,  # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    stream=sys.stdout  # Ensures logs go to stdout for Docker logging
+)
 
 Base = declarative_base()
 

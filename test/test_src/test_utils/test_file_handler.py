@@ -1,15 +1,23 @@
 ##############################################
-# Title: Modular File handling Script
+# Title: Modular File Handling Script
 # Author: Christopher Romanillos
-# Description: Modular utils script
+# Description: Modular utils script with Docker logging support.
 # Date: 12/01/24
-# Version: 1.1
+# Version: 1.2
 ##############################################
+
 import json
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
-import logging
+
+# Configure logging to send logs to stdout for Docker
+logging.basicConfig(
+    level=logging.INFO,  # Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    stream=sys.stdout  # Ensures logs go to stdout for Docker to capture
+)
 
 def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
     """
@@ -44,8 +52,17 @@ def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
         logging.error(f"Error locating the latest file: {e}")
         raise
 
-
 def save_processed_data(data, processed_data_dir):
+    """
+    Save processed data as a JSON file with a timestamped filename.
+
+    Args:
+        data (dict or list): The processed data to save.
+        processed_data_dir (str): The directory where the file should be saved.
+
+    Raises:
+        Exception: If there's an error during file writing.
+    """
     try:
         # Ensure the processed data directory exists
         processed_data_path = Path(processed_data_dir)
