@@ -12,6 +12,14 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 import logging
+import sys
+
+# Configure logging to send logs to stdout
+logging.basicConfig(
+    level=logging.INFO,  # Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    stream=sys.stdout  # Ensures logs go to stdout for Docker to capture
+)
 
 # Load environment variables
 load_dotenv()
