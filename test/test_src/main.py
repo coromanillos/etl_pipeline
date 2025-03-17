@@ -4,18 +4,30 @@
 # Description: Extracts, transforms, and loads 
 # Alpha Vantage data into the database.
 # Date: 12/08/24
-# Version: 1.3
+# Version: 1.4
 ##############################################
 
 import logging
+import sys
 from pathlib import Path
 from extract import extract_data
 from transform import initialize_pipeline, process_raw_data
 from load import load_data  
 
-# Setup logging for ETL process
-log_file = Path(__file__).resolve().parent.parent / 'logs' / 'etl_pipeline.log'
-logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Define log file path (Ensure this path is mounted in Docker volume)
+log_dir = Path(__file__).resolve().parent.parent / 'logs'
+log_dir.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
+log_file = log_dir / 'etl_pipeline.log'
+
+# Setup logging for both file and stdout (for Docker logs)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file),  # Persist logs in file
+        logging.StreamHandler(sys.stdout)  # Output logs to stdout for Docker
+    ]
+)
 
 def main():
     logging.info("ETL Process Started")
@@ -30,11 +42,11 @@ def main():
     try:
         initialize_pipeline()
     except Exception as e:
-        logging.error(f"Failed to initialize transformation pipeline: {e}")
+        logging.exception("Failed to initialize transformation pipeline")
         return
 
     # Step 3: Transform Data
-    transformed_data = process_raw_data(extracted_data)  # Ensure function accepts extracted_data
+    transformed_data = process_raw_data(extracted_data)
     if transformed_data is None:
         logging.error("Data transformation failed. ETL process terminated.")
         return
@@ -44,11 +56,7 @@ def main():
         load_data()
         logging.info("ETL process completed successfully.")
     except Exception as e:
-        logging.error(f"Data loading failed: {e}")
+        logging.exception("Data loading failed")
 
 if __name__ == "__main__":
     main()
-
-
-
-

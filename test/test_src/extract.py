@@ -18,10 +18,23 @@ from utils.api_requests import fetch_api_data
 from datetime import datetime
 from pathlib import Path
 import logging
+import sys
 
-# Set logging configuration to directory logs/extraction_record.log
-log_file_path = Path(__file__).resolve().parent.parent / 'logs' / 'extraction_record.log'
-setup_logging(log_file_path)
+# Define log directory and file path
+log_dir = Path(__file__).resolve().parent.parent / 'logs'
+log_dir.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
+log_file_path = log_dir / 'extraction_record.log'
+
+# Setup logging for both file and stdout/stderr (Docker logs)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file_path),  # File-based logging
+        logging.StreamHandler(sys.stdout),  # INFO logs to Docker stdout
+        logging.StreamHandler(sys.stderr),  # ERROR logs to Docker stderr
+    ]
+)
 
 def extract_data():
     """
@@ -29,8 +42,11 @@ def extract_data():
     Returns the extracted data.
     """
     try:
-        # Load configuration
-        config = load_config('../config/config.yaml')
+        logging.info("Starting data extraction...")
+
+        # Load configuration (ensure path is resolved correctly)
+        config_path = Path(__file__).resolve().parent.parent / 'config' / 'config.yaml'
+        config = load_config(str(config_path))
 
         # Retrieve API type for validation
         api_type = 'alpha_vantage_intraday'
@@ -61,6 +77,10 @@ def extract_data():
         # Fetch data
         data = fetch_api_data(url, timeout_value)
         
+        # Check for empty response before proceeding
+        if not data:
+            raise ValueError("No data received from API. Possible network issue.")
+
         # Check for API errors
         if not check_api_errors(data):
             raise ValueError("API returned an error. See logs for details.")
@@ -75,6 +95,7 @@ def extract_data():
 
         # Determine file save path
         raw_data_dir = Path(__file__).resolve().parent.parent / 'data' / 'raw_data'
+        raw_data_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
         output_file_path = raw_data_dir / f"data_{timestamp}.json"
 
         # Save the data
@@ -85,11 +106,11 @@ def extract_data():
         return data  # Return the extracted data so `main.py` can use it
 
     except ValueError as ve:
-        logging.error(f"Validation error: {ve}")
+        logging.error(f"Validation error: {ve}", exc_info=True)
     except KeyError as ke:
-        logging.error(f"KeyError: Missing key in the configuration or response. {ke}")
+        logging.error(f"KeyError: Missing key in the configuration or response. {ke}", exc_info=True)
     except Exception as e:
-        logging.error(f"An unexpected error occurred: {e}")
+        logging.error(f"An unexpected error occurred: {e}", exc_info=True)
 
     return None  # Return None if extraction fails (prevents errors in `main.py`)
 
