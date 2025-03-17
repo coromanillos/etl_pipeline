@@ -7,14 +7,18 @@
 ##############################################
 import json
 import logging
+import sys
 import yaml
 
 def setup_logging(log_file):
-    """Set up logging configuration."""
+    """Set up logging to both a file and stdout for Docker compatibility."""
     logging.basicConfig(
-        filename=log_file,
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(log_file),  # Log to file (persist via Docker volume)
+            logging.StreamHandler(sys.stdout)  # Log to stdout (for `docker logs`)
+        ]
     )
 
 def load_config(config_path):
