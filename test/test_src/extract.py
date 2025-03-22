@@ -25,16 +25,8 @@ log_dir = Path(__file__).resolve().parent.parent / 'logs'
 log_dir.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
 log_file_path = log_dir / 'extraction_record.log'
 
-# Setup logging for both file and stdout/stderr (Docker logs)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(log_file_path),  # File-based logging
-        logging.StreamHandler(sys.stdout),  # INFO logs to Docker stdout
-        logging.StreamHandler(sys.stderr),  # ERROR logs to Docker stderr
-    ]
-)
+# Setup logging using the utility function for modular logging configuration
+setup_logging(log_file_path)
 
 def extract_data():
     """
