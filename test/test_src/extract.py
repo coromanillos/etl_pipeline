@@ -18,7 +18,6 @@ from utils.api_requests import fetch_api_data
 from datetime import datetime
 from pathlib import Path
 import logging
-import sys
 
 # Define log directory and file path
 log_dir = Path(__file__).resolve().parent.parent / 'logs'
