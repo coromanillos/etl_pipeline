@@ -9,21 +9,30 @@ import json
 import logging
 import sys
 import yaml
+import structlog
 
+
+'''
 def setup_logging(log_file):
-    """Set up logging to both a file and stdout for Docker compatibility."""
+    """Set up logging to both a file and stdout/stderr for Docker compatibility."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
         handlers=[
-            logging.FileHandler(log_file),  # Log to file (persist via Docker volume)
-            logging.StreamHandler(sys.stdout)  # Log to stdout (for `docker logs`)
+            logging.FileHandler(log_file),  # Log to file
+            logging.StreamHandler(sys.stdout),  # INFO logs to stdout
+            logging.StreamHandler(sys.stderr),  # ERROR logs to stderr
         ]
     )
-
+'''
 def load_config(config_path):
+    """Load configuration from a YAML file."""
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
+
+# Load logging settings from config
+config = load_config("config/config.yaml")
+LOG_LEVEL = config.get("logging", {}).get("level", "INFO").upper()
 
 def save_to_file(data, file_path):
     """Save data to a JSON file."""
