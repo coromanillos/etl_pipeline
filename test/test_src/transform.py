@@ -15,10 +15,11 @@ from utils.utils import setup_logging, load_config
 from utils.file_handler import get_latest_file, save_processed_data
 from utils.data_validation import transform_and_validate_data
 
-# Load configuration
-config = load_config("../config/config.yaml")
+# Load configuration using the function from utils/config.py
+config_path = "../config/config.yaml"
+config = load_config(config_path)  # Loading the config from the file
 
-def initialize_pipeline(config_path="../config/config.yaml"):
+def initialize_pipeline(config_path=config_path):
     """
     Loads and validates configuration settings.
     Ensures all required keys exist.
@@ -32,7 +33,8 @@ def initialize_pipeline(config_path="../config/config.yaml"):
             logging.error(f"Missing required configuration key: {key}")
             raise ValueError(f"Missing required configuration key: {key}")
 
-    setup_logging(config.get("log_file", "default_log_file.log"))
+    # Setup logging using config file parameters
+    setup_logging(config.get("logging", {}).get("log_file", "default_log_file.log"))
     logging.info("Pipeline initialized successfully.")
 
 def process_raw_data():
@@ -47,7 +49,7 @@ def process_raw_data():
         raise RuntimeError("Pipeline not initialized. Call initialize_pipeline() first.")
 
     try:
-        # Get the latest raw data file
+        # Get the latest raw data file using the configured directory
         raw_data_file = get_latest_file(config["directories"]["raw_data"])
         if not raw_data_file:
             raise FileNotFoundError("No raw data files found.")
@@ -79,6 +81,7 @@ def process_raw_data():
                     failed_items.append({"item": item, "error": str(e)})
                 return None
 
+        # Using ThreadPoolExecutor to process data in parallel
         with ThreadPoolExecutor() as executor:
             results = executor.map(
                 lambda item: safe_transform(item, config["required_fields"]),
@@ -90,7 +93,7 @@ def process_raw_data():
             logging.warning("No valid data was processed.")
             return None  # Return None instead of raising an exception
 
-        # Save processed data
+        # Save processed data using configured path
         try:
             save_processed_data(processed_data, config["directories"]["processed_data"])
         except Exception as e:

@@ -1,3 +1,4 @@
+##############################################
 # Title: Database setup script
 # Author: Christopher Romanillos
 # Description: Creates PostgreSQL tables

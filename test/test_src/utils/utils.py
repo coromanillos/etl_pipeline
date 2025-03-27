@@ -1,44 +1,85 @@
 ##############################################
 # Title: Modular Utilities Script
 # Author: Christopher Romanillos
-# Description: modular utils script
+# Description: Modular utils script
 # Date: 3/06/25
 # Version: 1.0
-##############################################
+############################################### 
 import json
 import logging
-import sys
 import yaml
 import structlog
+import os
+from logging.config import dictConfig
 
-
-'''
-def setup_logging(log_file):
-    """Set up logging to both a file and stdout/stderr for Docker compatibility."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler(log_file),  # Log to file
-            logging.StreamHandler(sys.stdout),  # INFO logs to stdout
-            logging.StreamHandler(sys.stderr),  # ERROR logs to stderr
-        ]
-    )
-'''
-def load_config(config_path):
-    """Load configuration from a YAML file."""
-    with open(config_path, 'r') as file:
+# Load config
+def load_config():
+    with open("config/config.yaml", "r") as file:
         return yaml.safe_load(file)
+    
+# Setup logging to a single file
+def setup_logging():
+    config = load_config()
+    log_file = config["logging"]["log_file"]
 
-# Load logging settings from config
-config = load_config("config/config.yaml")
-LOG_LEVEL = config.get("logging", {}).get("level", "INFO").upper()
+    # Ensure log directory exists
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+
+    # Logging configuration for a single log file
+    dictConfig({
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "json": {
+                "()": structlog.processors.JSONRenderer()
+            }
+        },
+        "handlers": {
+            "info_stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": "ext://sys.stdout",
+                "level": "INFO"
+            },
+            "error_stderr": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": "ext://sys.stderr",
+                "level": "ERROR"
+            },
+            "file": {
+                "class": "logging.FileHandler",
+                "filename": log_file,
+                "formatter": "json",
+                "level": "INFO"
+            }
+        },
+        "root": {
+            "level": "INFO",
+            "handlers": ["info_stdout", "error_stderr", "file"]
+        }
+    })
+
+    structlog.configure(
+        processors=[
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.JSONRenderer()
+        ],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+        cache_logger_on_first_use=True
+    )
+
+    return structlog.get_logger()
+
+# Get logger instance
+logger = setup_logging()
 
 def save_to_file(data, file_path):
     """Save data to a JSON file."""
     with open(file_path, 'w') as file:
         json.dump(data, file)
-    logging.info(f"Data saved to {file_path}")
+    logger.info("Data saved", file_path=file_path)
 
 def validate_data(data, required_fields):
     """
@@ -53,13 +94,13 @@ def validate_data(data, required_fields):
     """
     for field in required_fields:
         if field not in data:
-            logging.error(f"Missing field: {field}")
+            logger.error("Missing field", field=field)
             return False
         if not isinstance(data[field], dict):
-            logging.error(f"Field {field} is not a dictionary.")
+            logger.error("Field is not a dictionary", field=field)
             return False
         if not data[field]:  # Ensure the field is not empty
-            logging.error(f"Field {field} is empty.")
+            logger.error("Field is empty", field=field)
             return False
     return True
 
@@ -74,9 +115,9 @@ def check_api_errors(data):
         bool: True if no errors are found, False otherwise.
     """
     if "Note" in data:
-        logging.error("API rate limit exceeded.")
+        logger.error("API rate limit exceeded")
         return False
     if "Error Message" in data:
-        logging.error(f"API error: {data['Error Message']}")
+        logger.error("API error", error_message=data["Error Message"])
         return False
     return True
