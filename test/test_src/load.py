@@ -9,23 +9,24 @@
 # Version: 1.3
 ##############################################
 
-# data_load.py
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from utils.utils import setup_logging
+from utils.utils import setup_logging, load_config
 from utils.schema import IntradayData
 from utils.file_handler import get_latest_file
-from utils.db_connection import get_db_session  # Import the function to get a database session
+from utils.db_connection import get_db_session  
 
-# Setup logging
-log_file = Path(__file__).resolve().parent.parent / 'logs' / 'data_load.log'
+# Load the configuration
+config = load_config("../config/config.yaml")  # Load config.yaml using the relative path
+
+log_file = Path(config["logging"]["log_file"])  # Use config for the log file path
 setup_logging(log_file)
 
 def load_data():
     """Load processed JSON data into the database."""
-    data_dir = Path(__file__).parent.parent / 'data' / 'processed_data'
+    data_dir = Path(config["directories"]["processed_data"])  # Get the processed data directory from config
 
     if not data_dir.exists() or not data_dir.is_dir():
         logging.error(f"Processed data directory does not exist: {data_dir}")

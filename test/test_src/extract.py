@@ -17,15 +17,13 @@ from utils.config import load_config, load_env_variables
 from utils.api_requests import fetch_api_data
 from datetime import datetime
 from pathlib import Path
-import logging
 
 # Load configuration
 config_path = Path(__file__).resolve().parent.parent / 'config' / 'config.yaml'
 config = load_config(str(config_path))
 
 # Setup logging using the config settings
-log_file_path = config.get("logging", {}).get("log_file", "../logs/extraction_record.log")
-setup_logging(log_file_path)
+logger = setup_logging()  # Using the logger from the utils setup
 
 def extract_data():
     """
@@ -33,7 +31,7 @@ def extract_data():
     Returns the extracted data.
     """
     try:
-        logging.info("Starting data extraction...")
+        logger.info("Starting data extraction...")
 
         # Retrieve API type for validation
         api_type = 'alpha_vantage_intraday'
@@ -45,7 +43,7 @@ def extract_data():
         # Validate required configuration keys
         missing_keys = [key for key in required_keys if key not in config['api']]
         if missing_keys:
-            logging.error(f"Missing required config keys: {', '.join(missing_keys)}")
+            logger.error(f"Missing required config keys: {', '.join(missing_keys)}")
             return None
 
         # Load environment variables
@@ -67,18 +65,18 @@ def extract_data():
         
         # Check for empty response before proceeding
         if not data:
-            logging.warning("No data received from API. Possible network issue.")
+            logger.warning("No data received from API. Possible network issue.")
             return None
 
         # Check for API errors
         if not check_api_errors(data):
-            logging.error("API returned an error. See logs for details.")
+            logger.error("API returned an error. See logs for details.")
             return None
 
         # Validate data structure
         required_fields = ['Meta Data', 'Time Series (5min)']
         if not validate_data(data, required_fields):
-            logging.error("Data validation failed. Required fields not found or invalid.")
+            logger.error("Data validation failed. Required fields not found or invalid.")
             return None
 
         # Add extraction timestamp
@@ -92,12 +90,12 @@ def extract_data():
         # Save the data
         save_to_file(data, output_file_path)
 
-        logging.info(f"Data extracted and saved successfully to path {output_file_path}")
+        logger.info(f"Data extracted and saved successfully to path {output_file_path}")
 
         return data  # Return the extracted data so `main.py` can use it
 
     except Exception as e:
-        logging.exception("An unexpected error occurred during extraction.")
+        logger.exception("An unexpected error occurred during extraction.")
 
     return None  # Return None if extraction fails (prevents errors in `main.py`)
 
