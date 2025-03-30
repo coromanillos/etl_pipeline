@@ -1,12 +1,10 @@
-# README - Savings Bank Data Pipeline
+# README - Savings Bank Data Pipeline Project
 
 ## Project Overview
 
-A savings bank employer has tasked you with designing a data pipeline that extracts data from multiple sources, performs ETL tasks to clean and process the data, and uploads new records weekly to a cloud data warehouse. The extracted data comes from the following source:
+A savings bank employer has tasked you with designing a data pipeline that extracts data from a data source, perform weekly ETL tasks to clean and process the data, and upload data to a cloud data warehouse. The extracted data comes from the following source:
 
 - **Alpha Vantage REST API**
-
-The goal is to build an automated, maintainable, and scalable pipeline that ensures data integrity and consistency.
 
 ## Requirements
 
