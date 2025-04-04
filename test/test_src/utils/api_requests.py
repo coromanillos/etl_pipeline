@@ -2,30 +2,33 @@ import requests
 import logging
 import sys
 
-# Set up logging to both stdout and stderr for Docker logging best practices
-logger = logging.getLogger()
+# Create a module-specific logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # Set default level for this module
 
-# Create a handler for stdout (regular logs)
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setLevel(logging.INFO)  # Adjust log level if necessary
+# Prevent duplicate logs when imported
+logger.propagate = False
 
-# Create a handler for stderr (error logs)
-stderr_handler = logging.StreamHandler(sys.stderr)
-stderr_handler.setLevel(logging.ERROR)  # Only log ERROR and CRITICAL to stderr
+# Check if handlers exist to avoid adding multiple handlers on re-import
+if not logger.handlers:
+    # Create a handler for stdout (INFO and lower)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
 
-# Define formatter
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    # Create a handler for stderr (ERROR and CRITICAL)
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(logging.ERROR)
 
-# Apply the formatter to both handlers
-stdout_handler.setFormatter(formatter)
-stderr_handler.setFormatter(formatter)
+    # Define a formatter
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-# Add handlers to the logger
-logger.addHandler(stdout_handler)
-logger.addHandler(stderr_handler)
+    # Apply the formatter to both handlers
+    stdout_handler.setFormatter(formatter)
+    stderr_handler.setFormatter(formatter)
 
-# Set the default log level to INFO
-logger.setLevel(logging.INFO)
+    # Add handlers to the logger
+    logger.addHandler(stdout_handler)
+    logger.addHandler(stderr_handler)
 
 def fetch_api_data(url, timeout):
     """Send a GET request to the API and return the data."""

@@ -3,30 +3,40 @@
 # Author: Christopher Romanillos
 # Description: Modular file handling script with logging support for Docker
 # Date: 12/01/24
-# Version: 1.1
+# Version: 1.2
 ##############################################
 
-import logging
+import structlog
 import sys
 from datetime import datetime
 
-# Configure logging to send logs to stdout
-logging.basicConfig(
-    level=logging.INFO,  # Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=sys.stdout  # Ensures logs go to stdout for Docker to capture
+# Configure structlog for JSON output
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,  # Respects log levels
+        structlog.processors.TimeStamper(fmt="iso"),  # Adds timestamp
+        structlog.processors.JSONRenderer(),  # Outputs logs in JSON format
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),  # Bridges with logging
+    cache_logger_on_first_use=True,
 )
+
+# Create structlog logger
+logger = structlog.get_logger()
 
 def transform_and_validate_data(item, required_fields):
     """Transform and validate data, ensuring required fields exist."""
     try:
         timestamp, values = item
-        logging.info(f"Processing data for timestamp {timestamp}.")
+        logger.info("Processing data", timestamp=timestamp)
 
-        if not all(field in values for field in required_fields):
-            logging.warning(f"Missing required fields for timestamp {timestamp}. Skipping entry.")
+        # Check for missing required fields
+        missing_fields = [field for field in required_fields if field not in values]
+        if missing_fields:
+            logger.warning("Skipping entry due to missing fields", timestamp=timestamp, missing_fields=missing_fields)
             return None
 
+        # Transform data
         transformed_data = {
             "timestamp": datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S'),
             "open": float(values["1. open"]),
@@ -35,10 +45,10 @@ def transform_and_validate_data(item, required_fields):
             "close": float(values["4. close"]),
             "volume": int(values["5. volume"]),
         }
-        
-        logging.info(f"Successfully transformed data for timestamp {timestamp}.")
+
+        logger.info("Successfully transformed data", timestamp=timestamp)
         return transformed_data
 
     except (ValueError, KeyError) as e:
-        logging.error(f"Error validating data for timestamp {timestamp}: {e}")
+        logger.error("Error validating data", timestamp=timestamp, error=str(e))
         return None
