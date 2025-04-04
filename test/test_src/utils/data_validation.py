@@ -7,7 +7,6 @@
 ##############################################
 
 import structlog
-import sys
 from datetime import datetime
 
 # Configure structlog for JSON output
