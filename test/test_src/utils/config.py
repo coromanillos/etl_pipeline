@@ -1,51 +1,56 @@
 ##############################################
 # Title: Modular Config Script
 # Author: Christopher Romanillos
-# Description: modular config script
+# Description: Modular config script
 # Date: 11/23/24
-# Version: 1.0
+# Version: 1.1
 ##############################################
-import yaml
-import logging
-import sys
-from dotenv import load_dotenv
+
+import os
 from pathlib import Path
-import os # Still needed for enviornment variable loading, pathlib does not replace it...
+import yaml
+from dotenv import load_dotenv
+import structlog
 
-
-# Configure logging to send logs to stdout
-logging.basicConfig(
-    level=logging.INFO,  # Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=sys.stdout  # Ensure logs go to stdout for Docker
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer()
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True
 )
+
+logger = structlog.get_logger()
 
 def load_config(config_path):
     """Load configuration from a YAML file."""
-    config_path = Path(config_path).resolve()  # Ensure the config path is absolute
-    logging.info(f"Loading configuration from {config_path}")
+    config_path = Path(config_path).resolve()
+    logger.info("Loading YAML configuration", path=str(config_path))
 
     try:
         with open(config_path, 'r') as file:
             config = yaml.safe_load(file)
-            logging.info("Configuration loaded successfully.")
+            logger.info("Configuration loaded successfully")
             return config
     except FileNotFoundError:
-        logging.error(f"Configuration file not found: {config_path}")
+        logger.error("Configuration file not found", path=str(config_path))
         raise
     except yaml.YAMLError as e:
-        logging.error(f"Error parsing YAML file: {e}")
+        logger.error("Error parsing YAML", error=str(e))
         raise
 
 def load_env_variables(key):
-    """Load environment variables."""
-    logging.info("Loading environment variables from .env file")
+    """Load environment variable from .env file."""
+    logger.info("Loading .env file")
     load_dotenv()
 
     value = os.getenv(key)
     if value is None:
-        logging.warning(f"Environment variable '{key}' is not set.")
+        logger.warn("Environment variable not set", variable=key)
     else:
-        logging.info(f"Environment variable '{key}' loaded successfully.")
-    
+        logger.info("Environment variable loaded", variable=key)
+
     return value

@@ -4,42 +4,45 @@
 # Description: Handles the creation of the 
 # database engine and sessions. 
 # Date: 3/11/24
-# Version: 1.0
+# Version: 1.1
 ##############################################
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
-import logging
-import sys
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import structlog
 
-# Configure logging to send logs to stdout
-logging.basicConfig(
-    level=logging.INFO,  # Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=sys.stdout  # Ensures logs go to stdout for Docker to capture
+# Configure structlog for clean, structured JSON-style logs
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer()
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
 )
 
-# Load environment variables
+logger = structlog.get_logger()
+
+# Load environment variables from .env file
 load_dotenv()
 
-# Get database URL from environment variables
+# Get the database URL
 DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")
 
 if not DATABASE_URL:
-    logging.error("DATABASE_URL is not set in the environment variables.")
-    exit(1)
+    logger.error("Missing environment variable", variable="POSTGRES_DATABASE_URL")
+    raise EnvironmentError("POSTGRES_DATABASE_URL is not set in environment variables.")
 
 def get_db_session():
-    """Returns a database session that can be used to interact with the database."""
+    """Returns a database session factory for interacting with the database."""
     try:
-        # Create the database engine
         engine = create_engine(DATABASE_URL)
-        # Create session factory
         Session = sessionmaker(bind=engine)
-        logging.info("Database connection established successfully.")
+        logger.info("Database connection established")
         return Session
     except Exception as e:
-        logging.error(f"Failed to create database engine: {e}")
-        exit(1)
+        logger.error("Failed to create database session", error=str(e))
+        raise  # Reraise to let the caller handle it if needed
