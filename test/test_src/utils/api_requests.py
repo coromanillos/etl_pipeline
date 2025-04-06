@@ -3,24 +3,14 @@
 # Author: Christopher Romanillos
 # Description: Handles API requests with structured logging
 # Date: 04/02/25
-# Version: 1.1
+# Version: 1.2
 ##############################################
 
 import requests
-import structlog
+from utils.logging import get_logger  # Import from your centralized logger module
 
-# Configure structlog for structured, Docker-friendly logs
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer()
-    ],
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
-logger = structlog.get_logger()
+# Bind context to this module for clearer logs
+logger = get_logger("api_requests")
 
 def fetch_api_data(url, timeout):
     """Send a GET request to the API and return the data."""

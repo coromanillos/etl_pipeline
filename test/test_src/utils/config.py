@@ -3,27 +3,16 @@
 # Author: Christopher Romanillos
 # Description: Modular config script
 # Date: 11/23/24
-# Version: 1.1
+# Version: 1.2
 ##############################################
 
 import os
 from pathlib import Path
 import yaml
 from dotenv import load_dotenv
-import structlog
+from utils.logging import get_logger  # Import from your centralized logger module
 
-# Configure structlog
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer()
-    ],
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True
-)
-
-logger = structlog.get_logger()
+logger = get_logger("config")  # Bind context to this module
 
 def load_config(config_path):
     """Load configuration from a YAML file."""
@@ -49,7 +38,7 @@ def load_env_variables(key):
 
     value = os.getenv(key)
     if value is None:
-        logger.warn("Environment variable not set", variable=key)
+        logger.warning("Environment variable not set", variable=key)
     else:
         logger.info("Environment variable loaded", variable=key)
 

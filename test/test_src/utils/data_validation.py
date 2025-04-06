@@ -3,25 +3,14 @@
 # Author: Christopher Romanillos
 # Description: Modular file handling script with logging support for Docker
 # Date: 12/01/24
-# Version: 1.2
+# Version: 1.3
 ##############################################
 
-import structlog
 from datetime import datetime
+from utils.logging import get_logger
 
-# Configure structlog for JSON output
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,  # Respects log levels
-        structlog.processors.TimeStamper(fmt="iso"),  # Adds timestamp
-        structlog.processors.JSONRenderer(),  # Outputs logs in JSON format
-    ],
-    logger_factory=structlog.stdlib.LoggerFactory(),  # Bridges with logging
-    cache_logger_on_first_use=True,
-)
-
-# Create structlog logger
-logger = structlog.get_logger()
+# Get a logger bound with this module's context
+logger = get_logger("data_validation")
 
 def transform_and_validate_data(item, required_fields):
     """Transform and validate data, ensuring required fields exist."""
