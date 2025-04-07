@@ -1,10 +1,9 @@
-# logging.py
 ##############################################
 # Title: Logging Configuration
 # Author: Christopher Romanillos
 # Description: Structlog-based logging setup
 # Date: 3/06/25
-# Version: 1.0
+# Version: 1.1
 ###############################################
 
 import os
@@ -13,12 +12,19 @@ import structlog
 from logging.config import dictConfig
 import yaml
 
+_logger_initialized = False  # Flag to prevent reinitialization
+
 def load_config():
     """Load YAML configuration."""
     with open("config/config.yaml", "r") as file:
         return yaml.safe_load(file)
 
 def setup_logging():
+    global _logger_initialized
+
+    if _logger_initialized:
+        return structlog.get_logger()
+
     config = load_config()
     log_file = config["logging"]["log_file"]
 
@@ -68,7 +74,5 @@ def setup_logging():
         cache_logger_on_first_use=True
     )
 
+    _logger_initialized = True
     return structlog.get_logger()
-
-# Initialize logger to be imported elsewhere
-logger = setup_logging()
