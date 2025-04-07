@@ -4,27 +4,17 @@
 # Description: Handles the creation of the 
 # database engine and sessions. 
 # Date: 3/11/24
-# Version: 1.1
+# Version: 1.2
 ##############################################
 
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import structlog
+from utils.logging import get_logger  # Use centralized logging config
 
-# Configure structlog for clean, structured JSON-style logs
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer()
-    ],
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
-logger = structlog.get_logger()
+# Bind context to this module
+logger = get_logger("db_connection")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -45,4 +35,4 @@ def get_db_session():
         return Session
     except Exception as e:
         logger.error("Failed to create database session", error=str(e))
-        raise  # Reraise to let the caller handle it if needed
+        raise
