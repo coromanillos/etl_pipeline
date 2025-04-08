@@ -24,6 +24,7 @@ directories:
 # Path for modular logging scripts
 logging:
   log_file: "../logs/etl_pipeline.log"
+  level: "INFO" # Can be DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 required_fields:
   - "1. open"

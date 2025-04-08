@@ -3,7 +3,7 @@
 # Author: Christopher Romanillos
 # Description: Structlog-based logging setup
 # Date: 3/06/25
-# Version: 1.1
+# Version: 1.2
 ###############################################
 
 import os
@@ -12,21 +12,23 @@ import structlog
 from logging.config import dictConfig
 import yaml
 
-_logger_initialized = False  # Flag to prevent reinitialization
+_logger_initialized = False
 
 def load_config():
-    """Load YAML configuration."""
     with open("config/config.yaml", "r") as file:
         return yaml.safe_load(file)
 
 def setup_logging():
     global _logger_initialized
-
     if _logger_initialized:
-        return structlog.get_logger()
+        return
 
     config = load_config()
     log_file = config["logging"]["log_file"]
+    log_level = config["logging"].get("level", "INFO").upper()
+
+    # Convert string level to numeric (e.g., INFO → 20)
+    numeric_level = getattr(logging, log_level, logging.INFO)
 
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
@@ -59,7 +61,7 @@ def setup_logging():
             }
         },
         "root": {
-            "level": "INFO",
+            "level": numeric_level,
             "handlers": ["info_stdout", "error_stderr", "file"]
         }
     })
@@ -67,12 +69,20 @@ def setup_logging():
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.add_log_level,
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer()
         ],
+        context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+        wrapper_class=structlog.make_filtering_bound_logger(numeric_level),
         cache_logger_on_first_use=True
     )
 
     _logger_initialized = True
-    return structlog.get_logger()
+
+def get_logger(name=None):
+    setup_logging()
+    logger = structlog.get_logger()
+    return logger.bind(module=name) if name else logger

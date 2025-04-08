@@ -7,13 +7,11 @@
 ##############################################
 
 import requests
-from utils.logging import get_logger  # Import from your centralized logger module
+from utils.logging import get_logger
 
-# Bind context to this module for clearer logs
 logger = get_logger("api_requests")
 
 def fetch_api_data(url, timeout):
-    """Send a GET request to the API and return the data."""
     try:
         logger.info("Sending request", url=url, timeout=timeout)
         response = requests.get(url, timeout=timeout)
