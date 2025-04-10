@@ -3,16 +3,17 @@
 # Author: Christopher Romanillos
 # Description: General-purpose utility methods
 # Date: 3/06/25
-# Version: 1.2
+# Version: 1.3
 ###############################################
 
 import json
 import yaml
 import os
-from logging import setup_logging  # Ensure you import your setup_logging
+from pathlib import Path
 
-# Initialize the logger
-logger = setup_logging()
+from utils.logging import get_logger
+
+logger = get_logger("utils")
 
 def load_config():
     """
@@ -24,17 +25,20 @@ def load_config():
     Raises:
         RuntimeError: If the config file is not found or invalid.
     """
-    config_path = "config/config.yaml"
-    if not os.path.exists(config_path):
-        logger.error(f"Config file not found: {config_path}")
+    config_path = Path("config/config.yaml").resolve()
+    if not config_path.exists():
+        logger.error("Config file not found", path=str(config_path))
         raise RuntimeError(f"Config file not found: {config_path}")
     
-    with open(config_path, "r") as file:
-        try:
-            return yaml.safe_load(file)
-        except yaml.YAMLError as e:
-            logger.error("Error parsing config.yaml", error=str(e))
-            raise RuntimeError("Error parsing config.yaml") from e
+    try:
+        with open(config_path, "r") as file:
+            config = yaml.safe_load(file)
+        logger.info("Configuration loaded", path=str(config_path))
+        return config
+    except yaml.YAMLError as e:
+        logger.error("Error parsing config.yaml", error=str(e))
+        raise RuntimeError("Error parsing config.yaml") from e
+
 
 def save_to_file(data, file_path, logger=logger):
     """
@@ -52,6 +56,7 @@ def save_to_file(data, file_path, logger=logger):
     except Exception as e:
         logger.error("Failed to save data", file_path=file_path, error=str(e))
         raise
+
 
 def validate_data(data, required_fields, logger=logger):
     """
@@ -75,7 +80,9 @@ def validate_data(data, required_fields, logger=logger):
         if not data[field]:
             logger.error("Field is empty", field=field)
             return False
+    logger.info("Data validated successfully")
     return True
+
 
 def check_api_errors(data, logger=logger):
     """
@@ -94,4 +101,5 @@ def check_api_errors(data, logger=logger):
     if "Error Message" in data:
         logger.error("API error", error_message=data["Error Message"])
         return False
+    logger.info("No API errors found")
     return True
