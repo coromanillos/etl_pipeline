@@ -3,7 +3,7 @@
 # Author: Christopher Romanillos
 # Description: Modular utils script with Docker logging support.
 # Date: 12/01/24
-# Version: 1.3
+# Version: 1.4
 ##############################################
 
 import json
@@ -41,9 +41,11 @@ def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
         latest_file = max(files, key=lambda f: f.stat().st_mtime)
         logger.info("Latest file found", file=str(latest_file))
         return latest_file
+
     except Exception as e:
         logger.error("Error locating the latest file", directory=directory, pattern=pattern, error=str(e))
         raise
+
 
 def save_processed_data(data, processed_data_dir):
     """
@@ -60,12 +62,14 @@ def save_processed_data(data, processed_data_dir):
         processed_data_path = Path(processed_data_dir)
         processed_data_path.mkdir(parents=True, exist_ok=True)
 
-        file_name = processed_data_path / f"processed_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_name = processed_data_path / f"processed_data_{timestamp}.json"
+
         with open(file_name, 'w') as file:
             json.dump(data, file, default=str)
 
         logger.info("Processed data saved", file=str(file_name))
+
     except Exception as e:
         logger.error("Error saving processed data", directory=processed_data_dir, error=str(e))
         raise

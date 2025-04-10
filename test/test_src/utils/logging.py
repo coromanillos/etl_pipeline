@@ -3,7 +3,7 @@
 # Author: Christopher Romanillos
 # Description: Structlog-based logging setup
 # Date: 3/06/25
-# Version: 1.2
+# Version: 1.3
 ###############################################
 
 import os
@@ -15,6 +15,7 @@ import yaml
 _logger_initialized = False
 
 def load_config():
+    """Load the configuration from the YAML file."""
     with open("config/config.yaml", "r") as file:
         return yaml.safe_load(file)
 
@@ -23,15 +24,20 @@ def setup_logging():
     if _logger_initialized:
         return
 
+    # Load configuration
     config = load_config()
+
+    # Extract logging configuration
     log_file = config["logging"]["log_file"]
     log_level = config["logging"].get("level", "INFO").upper()
 
     # Convert string level to numeric (e.g., INFO → 20)
     numeric_level = getattr(logging, log_level, logging.INFO)
 
+    # Ensure the log directory exists
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
+    # Configure logging settings
     dictConfig({
         "version": 1,
         "disable_existing_loggers": False,
@@ -66,6 +72,7 @@ def setup_logging():
         }
     })
 
+    # Configure structlog with dynamic log level assignment
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),
@@ -83,6 +90,7 @@ def setup_logging():
     _logger_initialized = True
 
 def get_logger(name=None):
-    setup_logging()
+    """Returns a logger instance with dynamic logging level."""
+    setup_logging()  # Ensure the logger is set up with the dynamic level
     logger = structlog.get_logger()
     return logger.bind(module=name) if name else logger
