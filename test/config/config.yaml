@@ -1,4 +1,4 @@
-# Configuration settings utilized via python.
+# Configuration settings utilized via Python.
 
 api:
   endpoint: https://www.alphavantage.co/query
@@ -21,11 +21,12 @@ directories:
   raw_data: "../data/raw_data"
   processed_data: "../data/processed_data"
 
-# Path for modular logging scripts
+# Logging configuration (centralized control)
 logging:
-  log_file: "../logs/etl_pipeline.log"
+  default_utilities_log: "../../logs/utilities.log" # fallback log file
   level: "INFO" # Can be DEBUG, INFO, WARNING, ERROR, CRITICAL
 
+# Required fields for ETL schema validation
 required_fields:
   - "1. open"
   - "2. high"

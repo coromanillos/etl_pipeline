@@ -3,16 +3,17 @@
 # Author: Christopher Romanillos
 # Description: Modular utils script with Docker logging support.
 # Date: 12/01/24
-# Version: 1.4
+# Version: 1.5
 ##############################################
 
 import json
 from datetime import datetime
 from pathlib import Path
-from utils.logging import get_logger  # Centralized structured logger
+from utils.logging import setup_logging, get_logger
 
-# Bind structured logger to this module
-logger = get_logger("file_handler")
+# Setup base logging config and bind structured logger to this module
+setup_logging()
+logger = get_logger(__file__)
 
 def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
     """
