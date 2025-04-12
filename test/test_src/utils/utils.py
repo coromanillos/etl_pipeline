@@ -8,11 +8,11 @@
 
 import json
 import yaml
-import os
 from pathlib import Path
 
 from utils.logging import get_logger
 
+# Use centralized logger
 logger = get_logger("utils")
 
 def load_config():
@@ -40,14 +40,13 @@ def load_config():
         raise RuntimeError("Error parsing config.yaml") from e
 
 
-def save_to_file(data, file_path, logger=logger):
+def save_to_file(data, file_path):
     """
     Save data to a JSON file.
 
     Args:
         data (dict): Data to be saved.
         file_path (str): Destination file path.
-        logger (structlog.BoundLogger, optional): Logger instance.
     """
     try:
         with open(file_path, 'w') as file:
@@ -58,14 +57,13 @@ def save_to_file(data, file_path, logger=logger):
         raise
 
 
-def validate_data(data, required_fields, logger=logger):
+def validate_data(data, required_fields):
     """
     Validate the structure and content of the API response data.
 
     Args:
         data (dict): The API response data.
         required_fields (list): List of required top-level keys.
-        logger (structlog.BoundLogger): Logger instance.
 
     Returns:
         bool: True if data is valid, False otherwise.
@@ -84,13 +82,12 @@ def validate_data(data, required_fields, logger=logger):
     return True
 
 
-def check_api_errors(data, logger=logger):
+def check_api_errors(data):
     """
     Check for API-specific error messages in the response.
 
     Args:
         data (dict): The API response data.
-        logger (structlog.BoundLogger): Logger instance.
 
     Returns:
         bool: True if no errors are found, False otherwise.

@@ -3,7 +3,7 @@
 # Author: Christopher Romanillos
 # Description: Modular config script
 # Date: 11/23/24
-# Version: 1.3
+# Version: 1.4
 ##############################################
 
 import os
@@ -11,44 +11,32 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-# Delay logger creation until after config is loaded
-logger = None
+from utils.logging import setup_logging, get_logger
+
+# Initialize structured logging with base-case fallback
+setup_logging()
+logger = get_logger(__file__)
 
 def load_config(config_path):
     """Load configuration from a YAML file and initialize logger dynamically."""
-    global logger
     config_path = Path(config_path).resolve()
 
     try:
         with open(config_path, 'r') as file:
             config = yaml.safe_load(file)
-    except FileNotFoundError:
-        # Use basic logging temporarily if full logger hasn't been configured yet
-        import logging
-        logging.basicConfig(level=logging.ERROR)
-        logging.error(f"Configuration file not found: {config_path}")
+        logger.info("YAML configuration loaded", path=str(config_path))
+        return config
+
+    except FileNotFoundError as e:
+        logger.error("Configuration file not found", path=str(config_path), error=str(e))
         raise
+
     except yaml.YAMLError as e:
-        import logging
-        logging.basicConfig(level=logging.ERROR)
-        logging.error(f"YAML parsing error: {e}")
+        logger.error("YAML parsing error", error=str(e))
         raise
-
-    # Set up dynamic logger now that config is available
-    from utils.logging import get_logger, setup_logging
-    setup_logging()  # Ensures logger uses the dynamic level
-    logger = get_logger("config")
-
-    logger.info("YAML configuration loaded", path=str(config_path))
-    return config
 
 def load_env_variables(key):
     """Load environment variable from .env file."""
-    if not logger:
-        from utils.logging import get_logger
-        global logger
-        logger = get_logger("config")
-
     logger.info("Loading .env file")
     load_dotenv()
 

@@ -1,10 +1,10 @@
 ##############################################
 # Title: Logging Configuration
 # Author: Christopher Romanillos
-# Description: Structlog-based logging setup
-# Date: 3/06/25
-# Version: 1.3
-###############################################
+# Description: Modular, dynamic logging setup using structlog
+# Date: 04/11/25
+# Version: 2.0
+##############################################
 
 import os
 import logging
@@ -12,32 +12,38 @@ import structlog
 from logging.config import dictConfig
 import yaml
 
-_logger_initialized = False
+_logger_initialized_paths = set()  # Track which log files have been initialized
+
 
 def load_config():
     """Load the configuration from the YAML file."""
     with open("config/config.yaml", "r") as file:
         return yaml.safe_load(file)
 
-def setup_logging():
-    global _logger_initialized
-    if _logger_initialized:
-        return
 
-    # Load configuration
+def setup_logging(log_file_path=None):
+    """
+    Set up structured logging dynamically. Default log file is 'utilities.log'.
+    :param log_file_path: Optional custom log file path for the current script/module.
+    """
     config = load_config()
-
-    # Extract logging configuration
-    log_file = config["logging"]["log_file"]
+    default_log_file = config["logging"].get("default_utilities_log", "../logs/utilities.log")
     log_level = config["logging"].get("level", "INFO").upper()
 
-    # Convert string level to numeric (e.g., INFO → 20)
+    # Determine which log file to use
+    log_file = log_file_path or default_log_file
+
+    # Prevent re-initializing the same log file
+    if log_file in _logger_initialized_paths:
+        return
+    _logger_initialized_paths.add(log_file)
+
     numeric_level = getattr(logging, log_level, logging.INFO)
 
-    # Ensure the log directory exists
+    # Ensure directory exists
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-    # Configure logging settings
+    # Set up logging configuration
     dictConfig({
         "version": 1,
         "disable_existing_loggers": False,
@@ -72,7 +78,6 @@ def setup_logging():
         }
     })
 
-    # Configure structlog with dynamic log level assignment
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),
@@ -87,10 +92,14 @@ def setup_logging():
         cache_logger_on_first_use=True
     )
 
-    _logger_initialized = True
 
-def get_logger(name=None):
-    """Returns a logger instance with dynamic logging level."""
-    setup_logging()  # Ensure the logger is set up with the dynamic level
+def get_logger(module_name=None, log_file_path=None):
+    """
+    Returns a logger instance for a module/script, with optional dynamic log file.
+    :param module_name: Optional name of the script/module using this logger.
+    :param log_file_path: Optional path to the log file.
+    :return: A bound structlog logger.
+    """
+    setup_logging(log_file_path=log_file_path)
     logger = structlog.get_logger()
-    return logger.bind(module=name) if name else logger
+    return logger.bind(module=module_name) if module_name else logger

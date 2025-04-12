@@ -3,22 +3,19 @@
 # Author: Christopher Romanillos
 # Description: Modular file handling script with logging support for Docker
 # Date: 12/01/24
-# Version: 1.4
+# Version: 1.5
 ##############################################
 
 from datetime import datetime
 
-# Delayed logger setup to support dynamic logging levels
-logger = None
+from utils.logging import setup_logging, get_logger
+
+# Setup logger using the base-case (utilities.log)
+setup_logging()
+logger = get_logger(__file__)
 
 def transform_and_validate_data(item, required_fields):
     """Transform and validate data, ensuring required fields exist."""
-    global logger
-    if not logger:
-        from utils.logging import setup_logging, get_logger
-        setup_logging()
-        logger = get_logger("data_validation")
-
     try:
         timestamp, values = item
         logger.info("Processing data", timestamp=timestamp)
@@ -26,7 +23,11 @@ def transform_and_validate_data(item, required_fields):
         # Check for missing required fields
         missing_fields = [field for field in required_fields if field not in values]
         if missing_fields:
-            logger.warning("Skipping entry due to missing fields", timestamp=timestamp, missing_fields=missing_fields)
+            logger.warning(
+                "Skipping entry due to missing fields",
+                timestamp=timestamp,
+                missing_fields=missing_fields
+            )
             return None
 
         # Transform data
