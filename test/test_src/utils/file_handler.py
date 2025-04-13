@@ -9,10 +9,9 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from utils.logging import setup_logging, get_logger
+from utils.logging import get_logger
 
 # Setup base logging config and bind structured logger to this module
-setup_logging()
 logger = get_logger(__file__)
 
 def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
