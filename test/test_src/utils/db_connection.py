@@ -12,10 +12,9 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from utils.logging import setup_logging, get_logger
+from utils.logging import get_logger
 
 # Setup logging immediately with default configuration
-setup_logging()
 logger = get_logger(__file__)
 
 # Load environment variables from .env file

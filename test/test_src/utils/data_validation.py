@@ -8,10 +8,9 @@
 
 from datetime import datetime
 
-from utils.logging import setup_logging, get_logger
+from utils.logging import get_logger
 
 # Setup logger using the base-case (utilities.log)
-setup_logging()
 logger = get_logger(__file__)
 
 def transform_and_validate_data(item, required_fields):

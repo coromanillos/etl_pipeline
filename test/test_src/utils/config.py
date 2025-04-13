@@ -11,10 +11,9 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-from utils.logging import setup_logging, get_logger
+from utils.logging import get_logger
 
 # Initialize structured logging with base-case fallback
-setup_logging()
 logger = get_logger(__file__)
 
 def load_config(config_path):
