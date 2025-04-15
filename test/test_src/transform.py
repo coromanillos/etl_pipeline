@@ -3,21 +3,24 @@
 # Author: Christopher Romanillos
 # Description: ETL pipeline to validate, process, and store time series data.
 # Date: 11/02/24
-# Version: 2.2
+# Version: 2.3
 ##############################################
 
-import logging
 import json
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
-from threading import Lock  # Ensures thread-safe operations
-from utils.utils import setup_logging, load_config
+from threading import Lock
+from utils.logging import get_logger
+from utils.utils import load_config
 from utils.file_handler import get_latest_file, save_processed_data
 from utils.data_validation import transform_and_validate_data
 
-# Load configuration using the function from utils/config.py
+# Initialize structured logger
+logger = get_logger(module_name="transform.py")
+
+# Load configuration
 config_path = "../config/config.yaml"
-config = load_config(config_path)  # Loading the config from the file
+config = load_config(config_path)
 
 def initialize_pipeline(config_path=config_path):
     """
@@ -30,12 +33,10 @@ def initialize_pipeline(config_path=config_path):
     required_keys = ["log_file", "directories", "required_fields"]
     for key in required_keys:
         if key not in config:
-            logging.error(f"Missing required configuration key: {key}")
+            logger.error("Missing required configuration key", key=key)
             raise ValueError(f"Missing required configuration key: {key}")
 
-    # Setup logging using config file parameters
-    setup_logging(config.get("logging", {}).get("log_file", "default_log_file.log"))
-    logging.info("Pipeline initialized successfully.")
+    logger.info("Pipeline initialized successfully")
 
 def process_raw_data():
     """
@@ -49,7 +50,6 @@ def process_raw_data():
         raise RuntimeError("Pipeline not initialized. Call initialize_pipeline() first.")
 
     try:
-        # Get the latest raw data file using the configured directory
         raw_data_file = get_latest_file(config["directories"]["raw_data"])
         if not raw_data_file:
             raise FileNotFoundError("No raw data files found.")
@@ -57,15 +57,13 @@ def process_raw_data():
         with open(raw_data_file, 'r') as file:
             raw_data = json.load(file)
 
-        # Extract time series data
         time_series_data = raw_data.get("Time Series (5min)")
         if not time_series_data:
             raise ValueError("Missing 'Time Series (5min)' in raw data.")
 
-        # Process data with parallelism
         processed_data = []
         failed_items = []
-        failed_items_lock = Lock()  # Ensures thread safety
+        failed_items_lock = Lock()
 
         def safe_transform(item, required_fields):
             """
@@ -75,13 +73,11 @@ def process_raw_data():
             try:
                 return transform_and_validate_data(item, required_fields)
             except Exception as e:
-                error_message = f"Error transforming item {str(item)[:100]}: {e}"  # Truncate long logs
                 with failed_items_lock:
-                    logging.error(error_message)
+                    logger.error("Error transforming item", error=str(e), item_preview=str(item)[:100])
                     failed_items.append({"item": item, "error": str(e)})
                 return None
 
-        # Using ThreadPoolExecutor to process data in parallel
         with ThreadPoolExecutor() as executor:
             results = executor.map(
                 lambda item: safe_transform(item, config["required_fields"]),
@@ -90,38 +86,37 @@ def process_raw_data():
             processed_data = [result for result in results if result is not None]
 
         if not processed_data:
-            logging.warning("No valid data was processed.")
-            return None  # Return None instead of raising an exception
+            logger.warning("No valid data was processed")
+            return None
 
-        # Save processed data using configured path
         try:
             save_processed_data(processed_data, config["directories"]["processed_data"])
         except Exception as e:
-            logging.error(f"Error saving processed data: {e}")
+            logger.error("Error saving processed data", error=str(e))
             return None
 
-        # Log failed items to a file for review
         if failed_items:
-            failed_items_file = f"{config['directories']['logs']}/failed_items_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            failed_items_file = (
+                f"{config['directories']['logs']}/failed_items_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            )
             with open(failed_items_file, "w") as f:
                 for failure in failed_items:
                     f.write(f"{failure}\n")
-            logging.warning(f"Some items failed processing. Details saved in {failed_items_file}")
+            logger.warning("Some items failed processing", failed_items_file=failed_items_file)
 
-        logging.info("ETL pipeline completed successfully.")
-        return processed_data  # Return processed data for external use
+        logger.info("ETL pipeline completed successfully")
+        return processed_data
 
     except FileNotFoundError as e:
-        logging.error(f"Pipeline error: {e}")
-        raise  # Raise FileNotFoundError for main.py to handle
+        logger.error("Pipeline error", error=str(e))
+        raise
     except ValueError as e:
-        logging.error(f"Pipeline validation error: {e}")
-        raise  # Raise ValueError for main.py to handle
+        logger.error("Pipeline validation error", error=str(e))
+        raise
     except Exception as e:
-        logging.error(f"Unexpected pipeline failure: {e}")
-        return None  # Return None instead of crashing
+        logger.error("Unexpected pipeline failure", error=str(e))
+        return None
 
-# Only execute when running the script directly
 if __name__ == "__main__":
     initialize_pipeline()
     process_raw_data()

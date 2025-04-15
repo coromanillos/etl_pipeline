@@ -13,7 +13,7 @@ from transform import initialize_pipeline, process_raw_data
 from load import load_data  
 
 # Step 1: Initialize Logging
-setup_logging()  # Optional: pass custom log path here if needed
+setup_logging() 
 logger = get_logger(__file__)
 
 def main():

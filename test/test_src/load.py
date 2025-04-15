@@ -6,47 +6,48 @@
 # Assumes the database from POSTGRES_DATABASE_URL
 # already exists.
 # Date: 12/08/24
-# Version: 1.3
+# Version: 1.4
 ##############################################
 
 import json
-import logging
 from datetime import datetime
 from pathlib import Path
-from utils.utils import setup_logging, load_config
+from utils.utils import load_config
 from utils.schema import IntradayData
 from utils.file_handler import get_latest_file
-from utils.db_connection import get_db_session  
+from utils.db_connection import get_db_session
+from utils.logging import get_logger 
 
 # Load the configuration
-config = load_config("../config/config.yaml")  # Load config.yaml using the relative path
+config = load_config("../config/config.yaml")
 
-log_file = Path(config["logging"]["log_file"])  # Use config for the log file path
-setup_logging(log_file)
+# Setup structured logging
+log_file_path = Path(config["logging"]["log_file"])
+logger = get_logger(module_name="load.py", log_file_path=log_file_path)
 
 def load_data():
     """Load processed JSON data into the database."""
-    data_dir = Path(config["directories"]["processed_data"])  # Get the processed data directory from config
+    data_dir = Path(config["directories"]["processed_data"])
 
     if not data_dir.exists() or not data_dir.is_dir():
-        logging.error(f"Processed data directory does not exist: {data_dir}")
+        logger.error("Processed data directory does not exist", directory=str(data_dir))
         return
 
     most_recent_file = get_latest_file(data_dir)
     if not most_recent_file:
+        logger.warning("No file found to load.")
         return
 
     # Load and validate JSON data
-    data = []
     try:
         with open(most_recent_file, 'r') as file:
             data = json.load(file)
-            logging.info(f"Loaded data from {most_recent_file}.")
+            logger.info("Loaded data from file", file=str(most_recent_file))
     except FileNotFoundError:
-        logging.error(f"File not found: {most_recent_file}")
+        logger.error("File not found", file=str(most_recent_file))
         return
     except json.JSONDecodeError as e:
-        logging.error(f"Failed to decode JSON: {e}")
+        logger.error("Failed to decode JSON", error=str(e))
         return
 
     # Validate JSON structure and insert records
@@ -55,7 +56,7 @@ def load_data():
     for record in data:
         missing_keys = required_keys - record.keys()
         if missing_keys:
-            logging.warning(f"Skipping invalid record: {record}. Missing keys: {missing_keys}")
+            logger.warning("Skipping invalid record", record=record, missing_keys=list(missing_keys))
             continue
         try:
             new_records.append(
@@ -70,22 +71,22 @@ def load_data():
                 )
             )
         except Exception as e:
-            logging.warning(f"Failed to process record: {record}, error: {e}")
+            logger.warning("Failed to process record", record=record, error=str(e))
 
-    # Bulk insert and handle database errors
+    # Bulk insert into DB
     try:
-        Session = get_db_session()  # Get the session from the new function
+        Session = get_db_session()
         with Session() as session:
             session.bulk_save_objects(new_records)
             session.commit()
-            logging.info(f"Successfully loaded {len(new_records)} records into the database.")
+            logger.info("Data loaded into database", count=len(new_records))
     except Exception as e:
-        logging.error(f"Database operation failed: {e}")
+        logger.error("Database operation failed", error=str(e))
 
 if __name__ == "__main__":
-    logging.info("Starting data load process...")
+    logger.info("Starting data load process...")
     try:
         load_data()
-        logging.info("Data load process completed successfully.")
+        logger.info("Data load process completed successfully.")
     except Exception as e:
-        logging.error(f"An unexpected error occurred during the data load process: {e}")
+        logger.exception("An unexpected error occurred during the data load process")
