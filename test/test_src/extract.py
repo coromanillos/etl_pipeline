@@ -4,13 +4,13 @@
 # Description: Extract data from Alpha Vantage
 #   REST API, timestamp, save the file
 # Date: 10/27/24
-# Version: 1.2
+# Version: 1.3 (Refactored for structlog)
 ##############################################
 
+from utils.logging import get_logger
 from utils.utils import (
-    setup_logging, 
-    save_to_file, 
-    validate_data, 
+    save_to_file,
+    validate_data,
     check_api_errors
 )
 from utils.config import load_config, load_env_variables
@@ -18,12 +18,13 @@ from utils.api_requests import fetch_api_data
 from datetime import datetime
 from pathlib import Path
 
+# Initialize logger specific to this module
+logger = get_logger(module_name="extract", log_file_path="logs/extract.log")
+
 # Load configuration
 config_path = Path(__file__).resolve().parent.parent / 'config' / 'config.yaml'
 config = load_config(str(config_path))
 
-# Setup logging using the config settings
-logger = setup_logging()  # Using the logger from the utils setup
 
 def extract_data():
     """
@@ -43,7 +44,7 @@ def extract_data():
         # Validate required configuration keys
         missing_keys = [key for key in required_keys if key not in config['api']]
         if missing_keys:
-            logger.error(f"Missing required config keys: {', '.join(missing_keys)}")
+            logger.error("Missing required config keys", missing_keys=missing_keys)
             return None
 
         # Load environment variables
@@ -62,8 +63,7 @@ def extract_data():
 
         # Fetch data
         data = fetch_api_data(url, timeout_value)
-        
-        # Check for empty response before proceeding
+
         if not data:
             logger.warning("No data received from API. Possible network issue.")
             return None
@@ -84,21 +84,20 @@ def extract_data():
 
         # Determine file save path
         raw_data_dir = Path(config['directories']['raw_data']).resolve()
-        raw_data_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
+        raw_data_dir.mkdir(parents=True, exist_ok=True)
         output_file_path = raw_data_dir / f"data_{timestamp}.json"
 
         # Save the data
         save_to_file(data, output_file_path)
 
-        logger.info(f"Data extracted and saved successfully to path {output_file_path}")
+        logger.info("Data extracted and saved successfully", path=str(output_file_path))
 
-        return data  # Return the extracted data so `main.py` can use it
+        return data
 
-    except Exception as e:
+    except Exception:
         logger.exception("An unexpected error occurred during extraction.")
+        return None
 
-    return None  # Return None if extraction fails (prevents errors in `main.py`)
 
-# Ensure script only runs when executed directly (not on import)
 if __name__ == "__main__":
     extract_data()
