@@ -1,5 +1,5 @@
 ##############################################
-# Title: Data Loading Script
+# Title: Data Loading to postgreSQL Script
 # Author: Christopher Romanillos
 # Description: Validates and loads cleaned and 
 # transformed data to data lake.
@@ -75,7 +75,7 @@ def load_data():
 
     # Bulk insert into DB
     try:
-        Session = get_db_session()
+        Session = get_db_session()  # Reusing session factory
         with Session() as session:
             session.bulk_save_objects(new_records)
             session.commit()
