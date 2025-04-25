@@ -104,3 +104,20 @@ etl_project/
 │ └── maybe custom decorators or helpers
 │
 └── main.py
+
+# What to double check before testing:
+
+- docker-compose.yml is correct and at root of project
+- .env file has correct values
+- Dockerfile that builds my app
+  - It should include Python, dependencies, and copy the code.
+
+# Once verified:
+
+- Two options for test run with Docker: one-time and background process
+
+# Testing 4/25
+
+- Open Docker Desktop, once 'engine is running' in bottome left; in bash 'docker ps'
+- Return to Docker Desktop, restart.
+- Make sure you have WSL 2 installed on windows/Linux, and that under the Settings/Resources/WSL Integration/ directory, Integration with my default WSL distro is enabled.
