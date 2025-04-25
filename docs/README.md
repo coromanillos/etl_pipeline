@@ -50,6 +50,8 @@ etl_s3_to_redshift.py
 
 ## Planned Utility scripts:
 
+db/ directory scripts
+
 ## psycopg2/sqlalchemy wrapper
 
 postgres_conn.py
@@ -57,3 +59,48 @@ postgres_conn.py
 ## redshift_connector wrapper
 
 redshift_conn.py
+
+aws/ directory
+
+## wrapper for AWS SDK actions like uploading a file to S3
+
+s3_utils.py
+
+# utilities directory/
+
+IAM authentication module
+s3_utils.py
+
+etl_project/
+│
+├── etl_api_to_postgres/
+│ ├── extract_api.py
+│ ├── transform_api_data.py
+│ └── load_to_postgres.py
+│
+├── etl_postgres_to_redshift/
+│ ├── extract_postgres.py
+│ ├── transform_analytics_data.py
+│ └── load_to_redshift.py
+│
+├── config/
+│ └── config.yaml
+│
+├── db/
+│ ├── postgres_connector.py # Logic to connect to your local or Docker-based Postgres
+│ ├── redshift_connector.py # IAM-auth Redshift connection (calls from auth/ maybe)
+│ └── s3_client.py # Boto3 client for file upload/download
+│
+├── aws/
+│ ├── s3_utils.py
+│ ├── iam_auth.py
+│ └── boto_session.py
+│
+├── auth/
+│ └── iam_auth.py # IAM auth/token logic
+│
+├── utils/
+│ ├── logging.py
+│ └── maybe custom decorators or helpers
+│
+└── main.py
