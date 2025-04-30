@@ -4,6 +4,6 @@ sqlalchemy~=2.0
 python-dotenv~=0.20
 requests~=2.28
 pyyaml~=5.4
-psycopg2~=2.9
+psycopg2-binary~=2.9
 structlog==25.2.0
 redshift-connector
