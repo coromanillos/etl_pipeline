@@ -8,7 +8,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     volumes:
       - .:/app
-      - ./logs:/app/logs
+      - ./logs:/app/logs # Ensure logs directory is persisted
     logging:
       driver: "json-file"
 
@@ -22,8 +22,3 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-volumes:
-  postgres-data:

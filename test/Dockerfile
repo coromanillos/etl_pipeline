@@ -27,8 +27,12 @@ COPY --from=build /app /app
 COPY . .
 
 # Download the wait-for-it script and make it executable
-RUN curl -sSL https://github.com/vishnubob/wait-for-it/releases/download/v2.7.0/wait-for-it.sh -o /usr/local/bin/wait-for-it && \
+RUN curl -sSL https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh -o /usr/local/bin/wait-for-it && \
     chmod +x /usr/local/bin/wait-for-it
 
 # Set the default command to run the application with wait-for-it to ensure the db is ready
-CMD ["sh", "-c", "wait-for-it db:5432 -- python main.py"]
+CMD sh -c "wait-for-it db:5432 -- python /app/main.py"
+
+
+
+
