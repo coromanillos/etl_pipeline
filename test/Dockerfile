@@ -9,13 +9,16 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install curl to download wait-for-it script
+# Install curl to download wait-for-it script (for build stage, optional)
 RUN apt-get update && apt-get install -y curl
 
 # Runtime Stage
 FROM python:3.9-slim
 
 WORKDIR /app
+
+# Install curl again in the runtime stage
+RUN apt-get update && apt-get install -y curl
 
 # Copy only the necessary files from the build stage
 COPY --from=build /app /app
