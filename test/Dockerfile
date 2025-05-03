@@ -32,7 +32,3 @@ RUN curl -sSL https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wai
 
 # Set the default command to run the application with wait-for-it to ensure the db is ready
 CMD sh -c "wait-for-it db:5432 -- python /app/main.py"
-
-
-
-
