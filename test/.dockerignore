@@ -1,0 +1,21 @@
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore environment files
+.env
+
+# Ignore development/editor folders
+.vscode/
+*.ipynb
+
+# Ignore log *files* in the root, but keep the logs/ directory
+*.log
+
+# Ignore Git metadata (optional but recommended)
+.git/
+.gitignore
+
+# Ignore Docker ignore itself
+.dockerignore
