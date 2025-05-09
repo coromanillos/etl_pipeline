@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   app:
     build: .
@@ -7,13 +5,12 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=${DATABASE_URL} # Using the variable from .env file
+      - DATABASE_URL=${DATABASE_URL}
     volumes:
-      - .:/app # Mount the entire project
-      - ./logs:/app/logs # Ensure logs persist outside the container
-    command: ["sh", "-c", "wait-for-it db:5432 -- python main.py"]
+      - .:/app
+      - ./logs:/app/logs # Ensure logs directory is persisted
     logging:
-      driver: "json-file" # Keep Docker's built-in logging for structured logs
+      driver: "json-file"
 
   db:
     image: postgres:16
@@ -25,9 +22,3 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
-    volumes:
-      - pg_data:/var/lib/postgresql/data # Ensure database persistence
-
-volumes:
-  pg_data: # Persistent volume for PostgreSQL database
-  logs: # Persistent volume for logs
