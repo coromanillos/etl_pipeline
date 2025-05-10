@@ -1,0 +1,14 @@
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T01:02:38.278418Z", "level": "info"}
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T01:28:16.315214Z", "level": "info"}
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T01:32:02.046448Z", "level": "info"}
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T01:35:15.561246Z", "level": "info"}
+{"module": "/app/src/utils/db_connection.py", "variable": "POSTGRES_DATABASE_URL", "event": "Missing environment variable", "timestamp": "2025-05-10T01:35:17.072063Z", "level": "error"}
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T01:49:03.203821Z", "level": "info"}
+{"module": "/app/src/utils/db_connection.py", "variable": "POSTGRES_DATABASE_URL", "event": "Missing environment variable", "timestamp": "2025-05-10T01:49:04.100483Z", "level": "error"}
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T01:55:13.580719Z", "level": "info"}
+{"module": "/app/src/utils/db_connection.py", "variable": "POSTGRES_DATABASE_URL", "event": "Missing environment variable", "timestamp": "2025-05-10T01:55:14.397752Z", "level": "error"}
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T02:09:24.190106Z", "level": "info"}
+{"module": "/app/src/utils/db_connection.py", "event": "Database connection pool established", "timestamp": "2025-05-10T02:09:28.303504Z", "level": "info"}
+{"module": "/app/src/utils/config.py", "path": "/app/config/config.yaml", "event": "YAML configuration loaded", "timestamp": "2025-05-10T02:31:44.871645Z", "level": "info"}
+{"module": "/app/src/utils/db_connection.py", "event": "Database connection pool established", "timestamp": "2025-05-10T02:31:46.370950Z", "level": "info"}
+{"module": "utils", "path": "/app/config/config.yaml", "event": "Configuration loaded", "timestamp": "2025-05-10T02:31:46.377986Z", "level": "info"}

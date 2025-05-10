@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   app:
     build:
@@ -8,6 +6,8 @@ services:
     container_name: etl_data_pipeline
     depends_on:
       - db
+    env_file:
+      - .env # Add this line to load the .env file
     environment:
       DATABASE_URL: ${DATABASE_URL}
     volumes:

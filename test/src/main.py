@@ -10,7 +10,7 @@
 from utils.logging import setup_logging, get_logger
 from extract import extract_data
 from transform import initialize_pipeline, process_raw_data
-from src.postgres_loader import load_data  
+from postgres_loader import load_data  
 
 # Step 1: Initialize Logging
 setup_logging() 

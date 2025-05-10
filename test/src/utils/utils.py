@@ -1,4 +1,4 @@
-##############################################
+###############################################
 # Title: General Utility Functions
 # Author: Christopher Romanillos
 # Description: General-purpose utility methods
@@ -14,9 +14,12 @@ from utils.logging import get_logger
 # Use centralized logger
 logger = get_logger("utils")
 
-def load_config():
+def load_config(config_path="config/config.yaml"):
     """
     Load the YAML configuration file.
+
+    Args:
+        config_path (str): Path to the config file. Defaults to "config/config.yaml".
 
     Returns:
         dict: Parsed configuration.
@@ -24,7 +27,7 @@ def load_config():
     Raises:
         RuntimeError: If the config file is not found or invalid.
     """
-    config_path = Path("config/config.yaml").resolve()
+    config_path = Path(config_path).resolve()
     if not config_path.exists():
         logger.error("Config file not found", path=str(config_path))
         raise RuntimeError(f"Config file not found: {config_path}")

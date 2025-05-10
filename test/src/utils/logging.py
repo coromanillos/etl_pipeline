@@ -1,10 +1,10 @@
-##############################################
+#############################################################
 # Title: Logging Configuration
 # Author: Christopher Romanillos
 # Description: Modular, dynamic logging setup using structlog
 # Date: 04/11/25
-# Version: 2.0
-##############################################
+# Version: 2.2
+#############################################################
 
 import os
 import logging
@@ -12,25 +12,44 @@ import structlog
 from logging.config import dictConfig
 import yaml
 
-_logger_initialized_paths = set()  # Track which log files have been initialized
+# Track which log files have been initialized to avoid redundant configuration
+_logger_initialized_paths = set()
 
 
 def load_config():
-    """Load the configuration from the YAML file."""
-    with open("config/config.yaml", "r") as file:
-        return yaml.safe_load(file)
+    """
+    Load the configuration from the YAML file located in the config directory.
+    This is intended to be the main configuration file for the app.
+    
+    Returns:
+        dict: Parsed YAML configuration.
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # /app/src/utils
+    config_path = os.path.join(base_dir, "..", "..", "config", "config.yaml")
+    
+    try:
+        with open(config_path, "r") as file:
+            return yaml.safe_load(file)
+    except FileNotFoundError as e:
+        raise RuntimeError(f"Config file not found: {config_path}") from e
+    except yaml.YAMLError as e:
+        raise RuntimeError(f"Error parsing config file: {config_path}") from e
 
 
 def setup_logging(log_file_path=None):
     """
-    Set up structured logging dynamically. Default log file is 'utilities.log'.
-    :param log_file_path: Optional custom log file path for the current script/module.
+    Set up structured logging with configurable log file paths and log levels.
+    
+    Args:
+        log_file_path (str, optional): Custom log file path. Defaults to None.
     """
     config = load_config()
+    
+    # Set default log file and log level from the configuration file
     default_log_file = config["logging"].get("default_utilities_log", "../logs/utilities.log")
     log_level = config["logging"].get("level", "INFO").upper()
 
-    # Determine which log file to use
+    # Determine which log file to use (either provided or default)
     log_file = log_file_path or default_log_file
 
     # Prevent re-initializing the same log file
@@ -38,37 +57,38 @@ def setup_logging(log_file_path=None):
         return
     _logger_initialized_paths.add(log_file)
 
-    numeric_level = getattr(logging, log_level, logging.INFO)
-
-    # Ensure directory exists
+    # Ensure the log directory exists
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-    # Set up logging configuration
+    # Convert log level to numeric value
+    numeric_level = getattr(logging, log_level, logging.INFO)
+
+    # Configure standard logging setup using dictConfig
     dictConfig({
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
-            "json": {
-                "()": structlog.processors.JSONRenderer()
+            "plain": {
+                "format": "%(message)s"
             }
         },
         "handlers": {
             "info_stdout": {
                 "class": "logging.StreamHandler",
-                "formatter": "json",
+                "formatter": "plain",
                 "stream": "ext://sys.stdout",
                 "level": "INFO"
             },
             "error_stderr": {
                 "class": "logging.StreamHandler",
-                "formatter": "json",
+                "formatter": "plain",
                 "stream": "ext://sys.stderr",
                 "level": "ERROR"
             },
             "file": {
                 "class": "logging.FileHandler",
                 "filename": log_file,
-                "formatter": "json",
+                "formatter": "plain",
                 "level": "INFO"
             }
         },
@@ -78,6 +98,7 @@ def setup_logging(log_file_path=None):
         }
     })
 
+    # Setup structlog for structured logging
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),
@@ -95,11 +116,20 @@ def setup_logging(log_file_path=None):
 
 def get_logger(module_name=None, log_file_path=None):
     """
-    Returns a logger instance for a module/script, with optional dynamic log file.
-    :param module_name: Optional name of the script/module using this logger.
-    :param log_file_path: Optional path to the log file.
-    :return: A bound structlog logger.
+    Returns a logger instance, optionally bound to a module name and custom log file.
+    
+    Args:
+        module_name (str, optional): The name of the module/script. Defaults to None.
+        log_file_path (str, optional): Custom log file path. Defaults to None.
+    
+    Returns:
+        structlog.BoundLogger: A structlog logger instance.
     """
     setup_logging(log_file_path=log_file_path)
+    
+    # Retrieve the logger and bind the module name if provided
     logger = structlog.get_logger()
-    return logger.bind(module=module_name) if module_name else logger
+    if module_name:
+        return logger.bind(module=module_name)
+    
+    return logger

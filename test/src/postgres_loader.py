@@ -1,12 +1,12 @@
 ##############################################
-# Title: Data Loading to postgreSQL Script
+# Title: Data Loading to PostgreSQL Script
 # Author: Christopher Romanillos
 # Description: Validates and loads cleaned and 
 # transformed data to data lake.
 # Assumes the database from POSTGRES_DATABASE_URL
 # already exists.
 # Date: 12/08/24
-# Version: 1.4
+# Version: 1.5
 ##############################################
 
 import json
@@ -16,14 +16,13 @@ from utils.utils import load_config
 from utils.schema import IntradayData
 from utils.file_handler import get_latest_file
 from utils.db_connection import get_db_session
-from utils.logging import get_logger 
+from utils.logging import get_logger
 
-# Load the configuration
+# Initialize logger (log config handled inside logging module)
+logger = get_logger(module_name="postgres_loader")
+
+# Load other app config
 config = load_config("../config/config.yaml")
-
-# Setup structured logging
-log_file_path = Path(config["logging"]["log_file"])
-logger = get_logger(module_name="load.py", log_file_path=log_file_path)
 
 def load_data():
     """Load processed JSON data into the database."""
@@ -38,7 +37,6 @@ def load_data():
         logger.warning("No file found to load.")
         return
 
-    # Load and validate JSON data
     try:
         with open(most_recent_file, 'r') as file:
             data = json.load(file)
@@ -50,7 +48,7 @@ def load_data():
         logger.error("Failed to decode JSON", error=str(e))
         return
 
-    # Validate JSON structure and insert records
+    # Validate and transform records
     new_records = []
     required_keys = {'timestamp', 'open', 'high', 'low', 'close', 'volume'}
     for record in data:
@@ -73,9 +71,8 @@ def load_data():
         except Exception as e:
             logger.warning("Failed to process record", record=record, error=str(e))
 
-    # Bulk insert into DB
     try:
-        Session = get_db_session()  # Reusing session factory
+        Session = get_db_session()
         with Session() as session:
             session.bulk_save_objects(new_records)
             session.commit()
@@ -83,10 +80,11 @@ def load_data():
     except Exception as e:
         logger.error("Database operation failed", error=str(e))
 
+
 if __name__ == "__main__":
     logger.info("Starting data load process...")
     try:
         load_data()
         logger.info("Data load process completed successfully.")
-    except Exception as e:
+    except Exception:
         logger.exception("An unexpected error occurred during the data load process")

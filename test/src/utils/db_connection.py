@@ -20,7 +20,8 @@ logger = get_logger(__file__)
 load_dotenv()
 
 # Get the database URL from environment variables
-DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 if not DATABASE_URL:
     logger.error("Missing environment variable", variable="POSTGRES_DATABASE_URL")
