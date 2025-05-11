@@ -5,16 +5,13 @@
 # Date: 04/11/25
 # Version: 2.2
 #############################################################
-
 import os
 import logging
 import structlog
 from logging.config import dictConfig
 import yaml
 
-# Track which log files have been initialized to avoid redundant configuration
 _logger_initialized_paths = set()
-
 
 def load_config():
     """
@@ -24,6 +21,9 @@ def load_config():
     Returns:
         dict: Parsed YAML configuration.
     """
+    # Ensure logger is initialized first
+    logger = structlog.get_logger()
+    
     base_dir = os.path.dirname(os.path.abspath(__file__))  # /app/src/utils
     config_path = os.path.join(base_dir, "..", "..", "config", "config.yaml")
     
@@ -31,8 +31,10 @@ def load_config():
         with open(config_path, "r") as file:
             return yaml.safe_load(file)
     except FileNotFoundError as e:
+        logger.exception(f"Config file not found: {config_path}")  # Log the exception
         raise RuntimeError(f"Config file not found: {config_path}") from e
     except yaml.YAMLError as e:
+        logger.exception(f"Error parsing config file: {config_path}")  # Log the exception
         raise RuntimeError(f"Error parsing config file: {config_path}") from e
 
 
@@ -125,6 +127,7 @@ def get_logger(module_name=None, log_file_path=None):
     Returns:
         structlog.BoundLogger: A structlog logger instance.
     """
+    # Setup logging if it hasn't been done already
     setup_logging(log_file_path=log_file_path)
     
     # Retrieve the logger and bind the module name if provided
