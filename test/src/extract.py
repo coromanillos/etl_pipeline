@@ -7,97 +7,66 @@
 # Version: 1.3 (Refactored for structlog)
 ##############################################
 
+import json
 from utils.logging import get_logger
-from utils.utils import (
-    save_to_file,
-    validate_data,
-    check_api_errors
-)
-from utils.config import load_config, load_env_variables
-from utils.api_requests import fetch_api_data
-from datetime import datetime
-from pathlib import Path
+from utils.utils import load_config
+from utils.file_handler import save_raw_data
+from utils.api_requests import fetch_data
 
-# Initialize logger specific to this module
-logger = get_logger(module_name="extract", log_file_path="logs/extract.log")
-
-# Load configuration
-config_path = Path(__file__).resolve().parent.parent / 'config' / 'config.yaml'
-config = load_config(str(config_path))
-
-
-def extract_data():
+def initialize_pipeline(config_path="../config/config.yaml"):
     """
-    Extracts data from the Alpha Vantage API, validates it, and saves it to a file.
-    Returns the extracted data.
+    Loads and validates configuration settings.
+    Returns validated configuration and logger instance.
+    """
+    # Load configuration
+    config = load_config(config_path)
+    
+    # Get log file path for extraction
+    log_file = config.get("extract", {}).get("log_file")
+    if not log_file:
+        raise ValueError("Missing required configuration key: extract.log_file")
+
+    # Initialize logger
+    logger = get_logger(module_name="extract.py", log_file_path=log_file)
+    
+    # Validate required fields for extraction
+    required_fields = config.get("extract", {}).get("required_fields")
+    if not required_fields:
+        raise ValueError("Missing required configuration key: extract.required_fields")
+
+    logger.info("Pipeline initialized successfully")
+    return config, logger
+
+def extract_data(config, logger):
+    """
+    Main function to extract data from Alpha Vantage API.
     """
     try:
-        logger.info("Starting data extraction...")
+        # Call API and fetch data
+        data = fetch_data(config["api"])
 
-        # Retrieve API type for validation
-        api_type = 'alpha_vantage_intraday'
-
-        # Load validation rules
-        validation_rules = config.get('validation', {}).get(api_type, {})
-        required_keys = validation_rules.get('required_keys', [])
-
-        # Validate required configuration keys
-        missing_keys = [key for key in required_keys if key not in config['api']]
-        if missing_keys:
-            logger.error("Missing required config keys", missing_keys=missing_keys)
-            return None
-
-        # Load environment variables
-        api_key = load_env_variables('API_KEY')
-
-        # Build API URL
-        api_endpoint = config['api']['endpoint']
-        timeout_value = config['api']['timeout']
-        symbol = config['api']['symbol']
-        interval = config['api'].get('interval', '5min')
-
-        url = f"{api_endpoint}?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval={interval}&adjusted=false&apikey={api_key}"
-
-        # Create a timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-        # Fetch data
-        data = fetch_api_data(url, timeout_value)
-
+        # Validate fetched data
         if not data:
-            logger.warning("No data received from API. Possible network issue.")
+            logger.error("No data extracted from API")
             return None
 
-        # Check for API errors
-        if not check_api_errors(data):
-            logger.error("API returned an error. See logs for details.")
+        # Save raw data to the specified directory
+        raw_data_file = save_raw_data(data, config["directories"]["raw_data"])
+        if raw_data_file:
+            logger.info(f"Data extracted and saved to {raw_data_file}")
+        else:
+            logger.error("Failed to save raw data")
             return None
+        
+        return raw_data_file
 
-        # Validate data structure
-        required_fields = ['Meta Data', 'Time Series (5min)']
-        if not validate_data(data, required_fields):
-            logger.error("Data validation failed. Required fields not found or invalid.")
-            return None
-
-        # Add extraction timestamp
-        data['extraction_time'] = timestamp
-
-        # Determine file save path
-        raw_data_dir = Path(config['directories']['raw_data']).resolve()
-        raw_data_dir.mkdir(parents=True, exist_ok=True)
-        output_file_path = raw_data_dir / f"data_{timestamp}.json"
-
-        # Save the data
-        save_to_file(data, output_file_path)
-
-        logger.info("Data extracted and saved successfully", path=str(output_file_path))
-
-        return data
-
-    except Exception:
-        logger.exception("An unexpected error occurred during extraction.")
+    except Exception as e:
+        logger.error("Unexpected extraction failure", error=str(e))
         return None
 
-
 if __name__ == "__main__":
-    extract_data()
+    # Initialize pipeline and logger
+    config, logger = initialize_pipeline(config_path="../config/config.yaml")
+    
+    # Extract data
+    extract_data(config, logger)

@@ -73,3 +73,31 @@ def save_processed_data(data, processed_data_dir):
     except Exception as e:
         logger.error("Error saving processed data", directory=processed_data_dir, error=str(e))
         raise
+
+def save_raw_data(data, raw_data_dir):
+    """
+    Save raw data as a JSON file with a timestamped filename.
+
+    Args:
+        data (dict or list): The raw data to save.
+        raw_data_dir (str): The directory where the file should be saved.
+
+    Returns:
+        str or None: The path to the saved file if successful, otherwise None.
+    """
+    try:
+        raw_data_path = Path(raw_data_dir)
+        raw_data_path.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_name = raw_data_path / f"raw_data_{timestamp}.json"
+
+        with open(file_name, 'w') as file:
+            json.dump(data, file, default=str)
+
+        logger.info("Raw data saved", file=str(file_name))
+        return str(file_name)
+
+    except Exception as e:
+        logger.error("Error saving raw data", directory=raw_data_dir, error=str(e))
+        return None

@@ -11,12 +11,10 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 import os
-
 from utils.logging import get_logger
 from utils.utils import load_config
 from utils.file_handler import get_latest_file, save_processed_data
 from utils.data_validation import transform_and_validate_data
-
 
 def initialize_pipeline(config_path="../config/config.yaml"):
     """
@@ -26,27 +24,21 @@ def initialize_pipeline(config_path="../config/config.yaml"):
     # Load configuration
     config = load_config(config_path)
     
-    # Get log file path from config, or default to "../logs/transform.log"
-    log_file_path = config["logging"].get("default_transform_log", "../logs/transform.log")
-    
-    # Ensure the log directory exists
-    log_dir = os.path.dirname(log_file_path)
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    
-    # Initialize logger
-    logger = get_logger(module_name="transform.py", log_file_path=log_file_path)
+    # Get log file path for transformation
+    log_file = config.get("transform", {}).get("log_file")
+    if not log_file:
+        raise ValueError("Missing required configuration key: transform.log_file")
 
-    # Validate required keys in config
-    required_keys = ["log_file", "directories", "required_fields"]
-    for key in required_keys:
-        if key not in config:
-            logger.error("Missing required configuration key", key=key)
-            raise ValueError(f"Missing required configuration key: {key}")
+    # Initialize logger
+    logger = get_logger(module_name="transform.py", log_file_path=log_file)
+
+    # Validate required fields for transformation
+    required_fields = config.get("transform", {}).get("required_fields")
+    if not required_fields:
+        raise ValueError("Missing required configuration key: transform.required_fields")
 
     logger.info("Pipeline initialized successfully")
     return config, logger
-
 
 def process_raw_data(config, logger):
     """
@@ -91,7 +83,7 @@ def process_raw_data(config, logger):
         # Process data in parallel using ThreadPoolExecutor
         with ThreadPoolExecutor() as executor:
             results = executor.map(
-                lambda item: safe_transform(item, config["required_fields"]),
+                lambda item: safe_transform(item, config["transform"]["required_fields"]),
                 time_series_data.items()
             )
             processed_data = [result for result in results if result is not None]
@@ -131,7 +123,6 @@ def process_raw_data(config, logger):
     except Exception as e:
         logger.error("Unexpected pipeline failure", error=str(e))
         return None
-
 
 if __name__ == "__main__":
     # Initialize pipeline and logger
