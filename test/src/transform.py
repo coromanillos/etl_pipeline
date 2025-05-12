@@ -1,11 +1,10 @@
-##############################################
+#############################################################################
 # Title: Alpha Vantage Time Series Data Validation
 # Author: Christopher Romanillos
 # Description: ETL pipeline to validate, process, and store time series data.
 # Date: 11/02/24
 # Version: 2.4
-##############################################
-
+#############################################################################
 import json
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
@@ -25,7 +24,7 @@ def initialize_pipeline(config_path="../config/config.yaml"):
     config = load_config(config_path)
     
     # Get log file path for transformation
-    log_file = config.get("transform", {}).get("log_file")
+    log_file = config.get("transform", {}).get("log_file", "../../logs/transform.log")
     if not log_file:
         raise ValueError("Missing required configuration key: transform.log_file")
 
