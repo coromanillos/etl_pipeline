@@ -4,7 +4,7 @@
 # Description: Extract data from Alpha Vantage
 #   REST API, timestamp, save the file
 # Date: 10/27/24
-# Version: 1.3 (Refactored for structlog)
+# Version: 1.4 (Updated logging path)
 ##############################################
 
 import json
@@ -26,8 +26,8 @@ def initialize_pipeline(config_path="../config/config.yaml"):
     if not log_file:
         raise ValueError("Missing required configuration key: extract.log_file")
 
-    # Initialize logger
-    logger = get_logger(module_name="extract.py", log_file_path=log_file)
+    # Initialize logger with path to extract.log
+    logger = get_logger(module_name="extract", log_file_path=log_file)
     
     # Validate required fields for extraction
     required_fields = config.get("extract", {}).get("required_fields")

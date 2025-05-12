@@ -10,6 +10,7 @@ import logging
 import structlog
 from logging.config import dictConfig
 import yaml
+import inspect
 
 _logger_initialized_paths = set()
 
@@ -91,7 +92,8 @@ def setup_logging(log_file_path=None):
                 "class": "logging.FileHandler",
                 "filename": log_file,
                 "formatter": "plain",
-                "level": "INFO"
+                "level": "INFO",
+                "mode": "a"
             }
         },
         "root": {
@@ -115,24 +117,28 @@ def setup_logging(log_file_path=None):
         cache_logger_on_first_use=True
     )
 
-
 def get_logger(module_name=None, log_file_path=None):
     """
-    Returns a logger instance, optionally bound to a module name and custom log file.
+    Returns a logger instance, automatically selecting the correct log file path
+    from the config.yaml based on the calling script's name if not explicitly passed.
     
     Args:
-        module_name (str, optional): The name of the module/script. Defaults to None.
-        log_file_path (str, optional): Custom log file path. Defaults to None.
+        module_name (str, optional): Name of the calling module. Defaults to None.
+        log_file_path (str, optional): Path to the desired log file. Defaults to None.
     
     Returns:
-        structlog.BoundLogger: A structlog logger instance.
+        structlog.BoundLogger: Configured logger instance.
     """
-    # Setup logging if it hasn't been done already
+    if log_file_path is None:
+        # Try to infer the calling script name (e.g., extract, transform)
+        frame = inspect.stack()[1]
+        calling_script = os.path.splitext(os.path.basename(frame.filename))[0]
+
+        # Load config and get corresponding log file from section
+        config = load_config()
+        log_file_path = config.get(calling_script, {}).get("log_file")
+
     setup_logging(log_file_path=log_file_path)
-    
-    # Retrieve the logger and bind the module name if provided
+
     logger = structlog.get_logger()
-    if module_name:
-        return logger.bind(module=module_name)
-    
-    return logger
+    return logger.bind(module=module_name or calling_script)

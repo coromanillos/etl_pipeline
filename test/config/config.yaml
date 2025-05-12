@@ -46,3 +46,6 @@ transform:
     - "3. low"
     - "4. close"
     - "5. volume"
+
+volumes:
+  - ./logs:/app/logs
