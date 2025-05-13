@@ -1,27 +1,25 @@
 ##############################################
 # Title: Data Loading to PostgreSQL Script
 # Author: Christopher Romanillos
-# Description: Validates and loads cleaned and 
+# Description: Validates and loads cleaned and
 # transformed data to data lake.
 # Assumes the database from POSTGRES_DATABASE_URL
 # already exists.
 # Date: 12/08/24
-# Version: 1.6
+# Version: 1.7
 ##############################################
 
 import json
 from datetime import datetime
 from pathlib import Path
-from utils.utils import load_config
+from utils.pipeline import initialize_pipeline
 from utils.schema import IntradayData
 from utils.file_handler import get_latest_file
 from utils.db_connection import get_db_session
-from utils.logging import get_logger
 
-config = load_config("../config/config.yaml")
-logger = get_logger("postgres_loader")
+def load_data(config):
+    _, logger = initialize_pipeline("postgres_loader", config_path="../config/config.yaml")
 
-def load_data():
     processed_dir = Path(config["directories"]["processed_data"])
     if not processed_dir.exists():
         logger.error("Processed data directory missing.", directory=str(processed_dir))
@@ -74,9 +72,12 @@ def load_data():
         logger.error("Database insertion failed.", error=str(e))
 
 if __name__ == "__main__":
+    # Initialize the pipeline (loading config and logger)
+    config, logger = initialize_pipeline("postgres_loader", config_path="../config/config.yaml")
+
     logger.info("Starting data load to PostgreSQL...")
     try:
-        load_data()
+        load_data(config)
         logger.info("PostgreSQL data load completed.")
     except Exception as e:
         logger.exception("Unexpected failure during PostgreSQL load.")

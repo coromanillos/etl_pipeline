@@ -9,11 +9,10 @@ import os
 import logging
 import inspect
 import yaml
-from logging.config import dictConfig
 from pythonjsonlogger import jsonlogger
+import structlog
 
 _logger_initialized_paths = set()
-
 
 def load_config():
     """
@@ -33,7 +32,6 @@ def load_config():
     except yaml.YAMLError as e:
         raise RuntimeError(f"Error parsing config file: {config_path}") from e
 
-
 def setup_logging(log_file_path=None):
     """
     Set up JSON logging with configurable log file paths and log levels.
@@ -43,6 +41,7 @@ def setup_logging(log_file_path=None):
     """
     config = load_config()
 
+    # Centralized logging configuration
     default_log_file = config["logging"].get("default_utilities_log", "../logs/utilities.log")
     log_level = config["logging"].get("level", "INFO").upper()
 
@@ -68,20 +67,21 @@ def setup_logging(log_file_path=None):
 
     formatter = CustomJsonFormatter()
 
+    # File handler for logging
     handler = logging.FileHandler(log_file)
     handler.setLevel(numeric_level)
     handler.setFormatter(formatter)
 
+    # Set up logger with the file handler
     logger = logging.getLogger()
     logger.setLevel(numeric_level)
     logger.addHandler(handler)
 
-    # Optional: also stream to console
+    # Optional: also stream to console (for local debugging)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(numeric_level)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-
 
 def get_logger(module_name=None, log_file_path=None):
     """
@@ -110,4 +110,3 @@ def get_logger(module_name=None, log_file_path=None):
 
     logger = structlog.get_logger()
     return logger.bind(module=module_name or calling_script)
-

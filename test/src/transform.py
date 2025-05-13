@@ -2,7 +2,7 @@
 # Title: Alpha Vantage Time Series Data Validation
 # Author: Christopher Romanillos
 # Description: Validates and transforms intraday time series data
-# Date: 11/02/24 | Version: 2.5 
+# Date: 11/02/24 | Version: 2.6
 #############################################################################
 
 import json
@@ -10,30 +10,25 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 import os
-from utils.logging import get_logger
-from utils.utils import load_config
+from utils.pipeline import initialize_pipeline
 from utils.file_handler import get_latest_file, save_processed_data
 from utils.data_validation import transform_and_validate_data
 
-def initialize_pipeline(config_path="../config/config.yaml"):
-    config = load_config(config_path)
-    log_file = config.get("transform", {}).get("log_file")
-    if not log_file:
-        raise ValueError("Missing configuration: transform.log_file")
-    logger = get_logger("transform", log_file)
-    logger.info("Transform pipeline initialized.")
-    return config, logger
-
-def process_raw_data(config, logger):
+def process_raw_data(config):
+    _, logger = initialize_pipeline("transform", config_path="../config/config.yaml")
+    
     try:
+        # Get the latest raw data file
         raw_file = get_latest_file(config["directories"]["raw_data"])
         if not raw_file:
             logger.error("No raw data file found.")
             return None
 
+        # Read the raw data file
         with open(raw_file, "r") as f:
             raw_data = json.load(f)
 
+        # Validate presence of 'Time Series (5min)' field
         series = raw_data.get("Time Series (5min)")
         if not series:
             raise ValueError("Missing 'Time Series (5min)' in data.")
@@ -50,6 +45,7 @@ def process_raw_data(config, logger):
                     failed_items.append(item)
                 return None
 
+        # Process the data using ThreadPoolExecutor for concurrency
         with ThreadPoolExecutor() as executor:
             results = executor.map(
                 lambda kv: safe_transform(kv, config["transform"]["required_fields"]),
@@ -57,13 +53,16 @@ def process_raw_data(config, logger):
             )
             processed_data = [r for r in results if r]
 
+        # Check if no valid data was processed
         if not processed_data:
             logger.warning("No valid data processed.")
             return None
 
+        # Save the processed data to the specified directory
         save_processed_data(processed_data, config["directories"]["processed_data"])
         logger.info("Data transformation completed successfully.")
 
+        # If there are failed items, log them to a file
         if failed_items:
             fail_path = os.path.join(
                 config['directories']['logs'],
@@ -81,5 +80,8 @@ def process_raw_data(config, logger):
         return None
 
 if __name__ == "__main__":
-    config, logger = initialize_pipeline()
-    process_raw_data(config, logger)
+    # Initialize the pipeline (loading config and logger)
+    config, _ = initialize_pipeline("transform", config_path="../config/config.yaml")
+
+    # Process the raw data
+    process_raw_data(config)

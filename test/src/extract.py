@@ -1,25 +1,16 @@
 #####################################################################################
-# # Title: Alpha Vantage Time Series Intraday Extract
+# Title: Alpha Vantage Time Series Intraday Extract
 # Author: Christopher Romanillos
 # Description: Extract data from Alpha Vantage REST API, timestamp, and save the file
-# Date: 10/27/24 | Version: 1.5 
+# Date: 10/27/24 | Version: 1.7
 #####################################################################################
 
-from utils.logging import get_logger
-from utils.utils import load_config
+from utils.pipeline import initialize_pipeline
 from utils.file_handler import save_raw_data
 from utils.api_requests import fetch_data
 
-def initialize_pipeline(config_path="../config/config.yaml"):
-    config = load_config(config_path)
-    log_file = config.get("extract", {}).get("log_file")
-    if not log_file:
-        raise ValueError("Missing configuration: extract.log_file")
-    logger = get_logger("extract", log_file)
-    logger.info("Extraction pipeline initialized.")
-    return config, logger
-
-def extract_data(config, logger):
+def extract_data(config):
+    _, logger = initialize_pipeline("extract", config_path="../config/config.yaml")
     try:
         data = fetch_data(config["api"])
         if not data:
@@ -34,9 +25,9 @@ def extract_data(config, logger):
         logger.info("Extraction completed successfully.")
         return raw_data_file
     except Exception as e:
-        logger.error("Extraction pipeline failed.", error=str(e))
+        logger.exception("Extraction pipeline failed.")
         return None
 
 if __name__ == "__main__":
-    config, logger = initialize_pipeline()
-    extract_data(config, logger)
+    config, _ = initialize_pipeline("extract", config_path="../config/config.yaml")
+    extract_data(config)
