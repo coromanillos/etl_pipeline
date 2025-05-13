@@ -1,5 +1,4 @@
-# Configuration settings utilized via Python.
-
+# config.yaml
 api:
   endpoint: https://www.alphavantage.co/query
   key: your_api_key
@@ -24,12 +23,14 @@ directories:
 
 # Logging configuration (centralized control)
 logging:
-  default_utilities_log: "../../logs/utilities.log" # fallback log file
-  level: "INFO" # Can be DEBUG, INFO, WARNING, ERROR, CRITICAL
+  default_utilities_log: "../logs/utilities.log"
+  extract_log_file: "../logs/extract.log"
+  transform_log_file: "../logs/transform.log"
+  postgres_loader_log_file: "../logs/postgres_loader.log"
+  main_log_file: "../logs/main.log"
 
 # Extract-specific configuration
 extract:
-  log_file: "../../logs/extract.log"
   required_fields:
     - "1. open"
     - "2. high"
@@ -39,7 +40,6 @@ extract:
 
 # Transform-specific configuration
 transform:
-  log_file: "../../logs/transform.log"
   required_fields:
     - "1. open"
     - "2. high"
@@ -47,5 +47,6 @@ transform:
     - "4. close"
     - "5. volume"
 
-volumes:
-  - ./logs:/app/logs
+# Postgres Loader-specific configuration
+postgres_loader:
+  # Removed log_file as it's now handled by logging section
