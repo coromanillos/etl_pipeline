@@ -2,9 +2,10 @@
 # Title: Logging Configuration
 # Author: Christopher Romanillos
 # Description: Modular, dynamic logging setup using JSON logging
-# Date: 04/11/25
-# Version: 3.0
+# Date: 05/14/25
+# Version: 3.1
 #############################################################
+
 import os
 import logging
 import inspect
@@ -14,15 +15,21 @@ import structlog
 
 _logger_initialized_paths = set()
 
-def load_config():
+def load_config(config_path=None):
     """
-    Load the configuration from the YAML file located in the config directory.
-    
+    Load the configuration from a YAML file.
+
+    Args:
+        config_path (str, optional): Custom path to the YAML config. Defaults to ../../config/config.yaml.
+
     Returns:
-        dict: Parsed YAML configuration.
+        dict: Parsed YAML config.
     """
-    base_dir = os.path.dirname(os.path.abspath(__file__))  # /app/src/utils
-    config_path = os.path.join(base_dir, "..", "..", "config", "config.yaml")
+    if config_path is None:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(base_dir, "..", "..", "config", "config.yaml")
+
+    config_path = os.path.abspath(config_path)
 
     try:
         with open(config_path, "r") as file:
@@ -32,20 +39,18 @@ def load_config():
     except yaml.YAMLError as e:
         raise RuntimeError(f"Error parsing config file: {config_path}") from e
 
-def setup_logging(log_file_path=None):
+def setup_logging(log_file_path=None, config_path=None):
     """
-    Set up JSON logging with configurable log file paths and log levels.
-    
+    Set up logging using JSON formatter and values from config.
+
     Args:
-        log_file_path (str, optional): Custom log file path. Defaults to None.
+        log_file_path (str, optional): Custom path to log file.
+        config_path (str, optional): Path to YAML config.
     """
-    config = load_config()
+    config = load_config(config_path)
 
-    # Centralized logging configuration
-    default_log_file = config["logging"].get("default_utilities_log", "../logs/utilities.log")
-    log_level = config["logging"].get("level", "INFO").upper()
-
-    log_file = log_file_path or default_log_file
+    log_level = config.get("logging", {}).get("level", "INFO").upper()
+    log_file = log_file_path or config["logging"].get("default_utilities_log", "../logs/utilities.log")
 
     if log_file in _logger_initialized_paths:
         return
@@ -55,7 +60,6 @@ def setup_logging(log_file_path=None):
 
     numeric_level = getattr(logging, log_level, logging.INFO)
 
-    # Define a custom JSON formatter
     class CustomJsonFormatter(jsonlogger.JsonFormatter):
         def add_fields(self, log_record, record, message_dict):
             super().add_fields(log_record, record, message_dict)
@@ -67,46 +71,47 @@ def setup_logging(log_file_path=None):
 
     formatter = CustomJsonFormatter()
 
-    # File handler for logging
-    handler = logging.FileHandler(log_file)
-    handler.setLevel(numeric_level)
-    handler.setFormatter(formatter)
-
-    # Set up logger with the file handler
     logger = logging.getLogger()
     logger.setLevel(numeric_level)
-    logger.addHandler(handler)
 
-    # Optional: also stream to console (for local debugging)
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    file_handler = logging.FileHandler(log_file, mode='a', encoding='utf-8')
+    file_handler.setLevel(numeric_level)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
     console_handler = logging.StreamHandler()
     console_handler.setLevel(numeric_level)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-def get_logger(module_name=None, log_file_path=None):
+def get_logger(module_name=None, log_file_path=None, config_path=None):
     """
-    Returns a logger instance, automatically selecting the correct log file path
-    from the logging section in config.yaml.
+    Return a structured logger bound to a specific module and log file.
 
     Args:
-        module_name (str, optional): Name of the calling module. Defaults to None.
-        log_file_path (str, optional): Path to the desired log file. Defaults to None.
+        module_name (str, optional): Name of the calling module. Inferred if None.
+        log_file_path (str, optional): Path to the log file. If not provided, fetched from config.
+        config_path (str, optional): Path to config.yaml.
 
     Returns:
-        structlog.BoundLogger: Configured logger instance.
+        structlog.BoundLogger: Configured structured logger.
     """
     if log_file_path is None:
-        # Try to infer the calling script name (e.g., extract, transform)
         frame = inspect.stack()[1]
         calling_script = os.path.splitext(os.path.basename(frame.filename))[0]
 
-        # Load config and get corresponding log file from the logging section
-        config = load_config()
+        config = load_config(config_path)
+        log_file_path = config.get("logging", {}).get(
+            f"{calling_script}_log_file",
+            config["logging"].get("default_utilities_log")
+        )
+    else:
+        calling_script = module_name or "unnamed"
 
-        # Fetch the log file for the corresponding module from the logging section
-        log_file_path = config["logging"].get(f"{calling_script}_log_file", config["logging"]["default_utilities_log"])
-
-    setup_logging(log_file_path=log_file_path)
+    setup_logging(log_file_path=log_file_path, config_path=config_path)
 
     logger = structlog.get_logger()
     return logger.bind(module=module_name or calling_script)

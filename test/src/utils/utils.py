@@ -3,44 +3,15 @@
 # Author: Christopher Romanillos
 # Description: General-purpose utility methods
 # Date: 3/06/25
-# Version: 1.3
+# Version: 1.4
 ###############################################
 
 import json
-import yaml
 from pathlib import Path
 from utils.logging import get_logger
 
 # Use centralized logger
 logger = get_logger("utils")
-
-def load_config(config_path="config/config.yaml"):
-    """
-    Load the YAML configuration file.
-
-    Args:
-        config_path (str): Path to the config file. Defaults to "config/config.yaml".
-
-    Returns:
-        dict: Parsed configuration.
-
-    Raises:
-        RuntimeError: If the config file is not found or invalid.
-    """
-    config_path = Path(config_path).resolve()
-    if not config_path.exists():
-        logger.error("Config file not found", path=str(config_path))
-        raise RuntimeError(f"Config file not found: {config_path}")
-    
-    try:
-        with open(config_path, "r") as file:
-            config = yaml.safe_load(file)
-        logger.info("Configuration loaded", path=str(config_path))
-        return config
-    except yaml.YAMLError as e:
-        logger.error("Error parsing config.yaml", error=str(e))
-        raise RuntimeError("Error parsing config.yaml") from e
-
 
 def save_to_file(data, file_path):
     """
