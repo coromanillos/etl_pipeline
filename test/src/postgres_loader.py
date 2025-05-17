@@ -1,39 +1,22 @@
 ##############################################
 # Title: Data Loading to PostgreSQL Script
 # Author: Christopher Romanillos
-# Description: Validates and loads cleaned and
-# transformed data to data lake.
-# Assumes the database from POSTGRES_DATABASE_URL
-# already exists.
+# Description: Loads cleaned and transformed 
+# data to PostgreSQL.
 # Date: 12/08/24
-# Version: 1.7
+# Version: 2.0
 ##############################################
 
 import json
 from datetime import datetime
-from pathlib import Path
-from utils.pipeline import initialize_pipeline
 from utils.schema import IntradayData
-from utils.file_handler import get_latest_file
 from utils.db_connection import get_db_session
 
-def load_data(config):
-    _, logger = initialize_pipeline("postgres_loader", config_path="../config/config.yaml")
-
-    processed_dir = Path(config["directories"]["processed_data"])
-    if not processed_dir.exists():
-        logger.error("Processed data directory missing.", directory=str(processed_dir))
-        return
-
-    data_file = get_latest_file(processed_dir)
-    if not data_file:
-        logger.warning("No processed file found.")
-        return
-
+def load_data(processed_file_path: str, config: dict, logger) -> None:
     try:
-        with open(data_file, "r") as f:
+        with open(processed_file_path, "r") as f:
             data = json.load(f)
-            logger.info("Processed data file loaded.", file=str(data_file))
+            logger.info("Processed data file loaded.", file=processed_file_path)
     except Exception as e:
         logger.error("Failed to read processed file.", error=str(e))
         return
@@ -70,14 +53,3 @@ def load_data(config):
         logger.info("Data loaded into PostgreSQL successfully.", count=len(records))
     except Exception as e:
         logger.error("Database insertion failed.", error=str(e))
-
-if __name__ == "__main__":
-    # Initialize the pipeline (loading config and logger)
-    config, logger = initialize_pipeline("postgres_loader", config_path="../config/config.yaml")
-
-    logger.info("Starting data load to PostgreSQL...")
-    try:
-        load_data(config)
-        logger.info("PostgreSQL data load completed.")
-    except Exception as e:
-        logger.exception("Unexpected failure during PostgreSQL load.")
