@@ -1,4 +1,4 @@
-# config.yaml
+# config.yaml file
 api:
   endpoint: https://www.alphavantage.co/query
   key: your_api_key
@@ -23,6 +23,7 @@ directories:
 
 # Logging configuration (centralized control)
 logging:
+  level: INFO # Or DEBUG, ERROR*
   default_utilities_log: "../logs/utilities.log"
   extract_log_file: "../logs/extract.log"
   transform_log_file: "../logs/transform.log"
