@@ -3,8 +3,7 @@
 # Author: Christopher Romanillos
 # Description: Loads cleaned and transformed 
 # data to PostgreSQL.
-# Date: 12/08/24
-# Version: 2.0
+# Date: 12/08/24 | Version: 2.1 (refactored for modern logging)
 ##############################################
 
 import json
@@ -16,9 +15,9 @@ def load_data(processed_file_path: str, config: dict, logger) -> None:
     try:
         with open(processed_file_path, "r") as f:
             data = json.load(f)
-            logger.info("Processed data file loaded.", file=processed_file_path)
+            logger.info(f"Processed data file loaded from: {processed_file_path}")
     except Exception as e:
-        logger.error("Failed to read processed file.", error=str(e))
+        logger.error(f"Failed to read processed file: {e}")
         return
 
     records = []
@@ -50,6 +49,6 @@ def load_data(processed_file_path: str, config: dict, logger) -> None:
         with Session() as session:
             session.bulk_save_objects(records)
             session.commit()
-        logger.info("Data loaded into PostgreSQL successfully.", count=len(records))
+        logger.info(f"Data loaded into PostgreSQL successfully. Total records inserted: {len(records)}")
     except Exception as e:
-        logger.error("Database insertion failed.", error=str(e))
+        logger.error(f"Database insertion failed: {e}")

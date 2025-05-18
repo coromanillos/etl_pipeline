@@ -30,8 +30,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+# Commented out because postgres does not need to be persisting if S3 holds all the data.
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:

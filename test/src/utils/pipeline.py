@@ -1,12 +1,11 @@
 #############################################################################
-# Title: Centralized logging setup
-# Author: Christopher Romanillos
-# Description: Locate the correct .log file for each specific script
-# Date: 05/13/25 | Version: 1.0 
+# Title: Centralized logging setup (modernized)
+# Author: Christopher Romanillos, Copilot
+# Description: Loads config, sets up structured logger for a pipeline component
+# Date: 2025-05-18 | Version: 2.0 
 #############################################################################
 
 from utils.logging import get_logger, load_config
-import os 
 
 def initialize_pipeline(component_name: str, config_path: str = "../config/config.yaml"):
     """
@@ -20,15 +19,6 @@ def initialize_pipeline(component_name: str, config_path: str = "../config/confi
         tuple: (config dict, logger instance)
     """
     config = load_config(config_path)
-    
-    log_file_key = f"{component_name}_log_file"
-    log_file = config.get("logging", {}).get(log_file_key)
-
-    if not log_file:
-        raise ValueError(f"Missing configuration: logging.{log_file_key}")
-    
-    logger = get_logger(module_name=component_name, log_file_path=log_file, config_path=config_path)
+    logger = get_logger(module_name=component_name, config_path=config_path)
     logger.info(f"{component_name.capitalize()} pipeline initialized.")
-    
-    print(f"[DEBUG] Log file path resolved to: {os.path.abspath(log_file)}")
     return config, logger

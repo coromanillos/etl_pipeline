@@ -19,16 +19,13 @@ validation:
 directories:
   raw_data: "../data/raw_data"
   processed_data: "../data/processed_data"
-  logs: "../../logs" # Shared log directory
+  # logs: "../../logs" # No longer needed for logging, but can keep for data dirs if desired
 
-# Logging configuration (centralized control)
+# Logging configuration (centralized, modern: STDOUT/JSON)
 logging:
-  level: INFO # Or DEBUG, ERROR*
-  default_utilities_log: "../logs/utilities.log"
-  extract_log_file: "../logs/extract.log"
-  transform_log_file: "../logs/transform.log"
-  postgres_loader_log_file: "../logs/postgres_loader.log"
-  main_log_file: "../logs/main.log"
+  level: DEBUG # Set log level: DEBUG, INFO, ERROR, etc.
+  format: json # Structured logs (JSON) for aggregation/analysis
+  # No log files needed for modern container logging
 
 # Extract-specific configuration
 extract:
@@ -50,4 +47,4 @@ transform:
 
 # Postgres Loader-specific configuration
 postgres_loader:
-  # Removed log_file as it's now handled by logging section
+  # Logging now handled globally; no file setting here

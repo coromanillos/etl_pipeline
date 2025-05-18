@@ -2,8 +2,8 @@
 # Title: Modular File Handling Script
 # Author: Christopher Romanillos
 # Description: Modular utils script with Docker logging support.
-# Date: 12/01/24
-# Version: 1.5
+# Date: 2025-05-18
+# Version: 1.6 (refactored for consistent return values and modern logging)
 ##############################################
 
 import json
@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from utils.logging import get_logger
 
-# Setup base logging config and bind structured logger to this module
 logger = get_logger(__file__)
 
 def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
@@ -46,7 +45,6 @@ def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
         logger.error("Error locating the latest file", directory=directory, pattern=pattern, error=str(e))
         raise
 
-
 def save_processed_data(data, processed_data_dir):
     """
     Save processed data as a JSON file with a timestamped filename.
@@ -55,8 +53,8 @@ def save_processed_data(data, processed_data_dir):
         data (dict or list): The processed data to save.
         processed_data_dir (str): The directory where the file should be saved.
 
-    Raises:
-        Exception: If there's an error during file writing.
+    Returns:
+        str or None: The path to the saved file if successful, otherwise None.
     """
     try:
         processed_data_path = Path(processed_data_dir)
@@ -69,10 +67,10 @@ def save_processed_data(data, processed_data_dir):
             json.dump(data, file, default=str)
 
         logger.info("Processed data saved", file=str(file_name))
-
+        return str(file_name)
     except Exception as e:
         logger.error("Error saving processed data", directory=processed_data_dir, error=str(e))
-        raise
+        return None
 
 def save_raw_data(data, raw_data_dir):
     """
@@ -97,7 +95,6 @@ def save_raw_data(data, raw_data_dir):
 
         logger.info("Raw data saved", file=str(file_name))
         return str(file_name)
-
     except Exception as e:
         logger.error("Error saving raw data", directory=raw_data_dir, error=str(e))
         return None
