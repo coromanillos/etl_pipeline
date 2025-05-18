@@ -27,4 +27,4 @@ RUN curl -sSL https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wai
     chmod +x /usr/local/bin/wait-for-it
 
 # Run app with wait-for-it
-CMD ["wait-for-it", "db:5432", "--", "python", "src/main.py"]
+CMD ["wait-for-it", "db:5432", "-t", "30", "--", "python", "src/main.py"]

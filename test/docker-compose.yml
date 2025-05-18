@@ -1,13 +1,34 @@
 services:
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+    # Uncomment if you need Postgres data to persist between runs:
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql/data
+
   app:
     build:
       context: . # root of your project
       dockerfile: Dockerfile
     container_name: etl_data_pipeline
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
-      - .env # Add this line to load the .env file
+      - .env # Loads environment variables from .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
     volumes:
@@ -19,20 +40,6 @@ services:
     command: python main.py
     logging:
       driver: json-file
-
-  db:
-    image: postgres:16
-    container_name: postgres_db
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
-# Commented out because postgres does not need to be persisting if S3 holds all the data.
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+# Uncomment if you use persistent Postgres storage:
+# volumes:
+#   postgres_data:

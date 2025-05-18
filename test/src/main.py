@@ -10,12 +10,16 @@ from extract import extract_data
 from transform import process_raw_data
 from postgres_loader import load_data
 from utils.pipeline import initialize_pipeline
-
+from utils.schema import Base
+from utils.db_connection import engine
 def main():
     try:
         config, logger = initialize_pipeline(component_name="main", config_path="../config/config.yaml")
         logger.info("***** ETL script has started! *****")
         logger.info("ETL Process Started")
+
+        # --- Ensure all tables exist ---
+        Base.metadata.create_all(engine)
 
         # Step 1: Extract
         raw_file_path = extract_data(config, logger)
