@@ -1,31 +1,34 @@
-##############################################
-# Title: Modular Utilities Script
+###############################################
+# Title: General Utility Functions
 # Author: Christopher Romanillos
-# Description: modular utils script
+# Description: General-purpose utility methods
 # Date: 3/06/25
-# Version: 1.0
-##############################################
+# Version: 1.4
+###############################################
+
 import json
-import logging
-import yaml
+from pathlib import Path
+from utils.logging import get_logger
 
-def setup_logging(log_file):
-    """Set up logging configuration."""
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
-
-def load_config(config_path):
-    with open(config_path, 'r') as file:
-        return yaml.safe_load(file)
+# Use centralized logger
+logger = get_logger("utils")
 
 def save_to_file(data, file_path):
-    """Save data to a JSON file."""
-    with open(file_path, 'w') as file:
-        json.dump(data, file)
-    logging.info(f"Data saved to {file_path}")
+    """
+    Save data to a JSON file.
+
+    Args:
+        data (dict): Data to be saved.
+        file_path (str): Destination file path.
+    """
+    try:
+        with open(file_path, 'w') as file:
+            json.dump(data, file, indent=2)
+        logger.info("Data saved", file_path=file_path)
+    except Exception as e:
+        logger.error("Failed to save data", file_path=file_path, error=str(e))
+        raise
+
 
 def validate_data(data, required_fields):
     """
@@ -40,15 +43,17 @@ def validate_data(data, required_fields):
     """
     for field in required_fields:
         if field not in data:
-            logging.error(f"Missing field: {field}")
+            logger.error("Missing field", field=field)
             return False
         if not isinstance(data[field], dict):
-            logging.error(f"Field {field} is not a dictionary.")
+            logger.error("Field is not a dictionary", field=field)
             return False
-        if not data[field]:  # Ensure the field is not empty
-            logging.error(f"Field {field} is empty.")
+        if not data[field]:
+            logger.error("Field is empty", field=field)
             return False
+    logger.info("Data validated successfully")
     return True
+
 
 def check_api_errors(data):
     """
@@ -61,9 +66,10 @@ def check_api_errors(data):
         bool: True if no errors are found, False otherwise.
     """
     if "Note" in data:
-        logging.error("API rate limit exceeded.")
+        logger.error("API rate limit exceeded")
         return False
     if "Error Message" in data:
-        logging.error(f"API error: {data['Error Message']}")
+        logger.error("API error", error_message=data["Error Message"])
         return False
+    logger.info("No API errors found")
     return True

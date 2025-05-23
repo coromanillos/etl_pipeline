@@ -1,28 +1,58 @@
 ##############################################
-# Title: Modular API Request Script
+# Title: API Requests Utility
 # Author: Christopher Romanillos
-# Description: modular api_request script
-# Date: 11/23/24
-# Version: 1.0
+# Description: Handles API requests with structured logging
+# Date: 04/02/25
+# Version: 1.3
 ##############################################
-import requests
-import logging
 
-def fetch_api_data(url, timeout):
-    """Send a GET request to the API and return the data."""
+import requests
+from utils.logging import get_logger
+
+# Get logger with default base-case logging (utilities.log)
+logger = get_logger(__file__)
+
+def fetch_data(api_config):
+    """
+    Fetch data from the API using the provided configuration.
+
+    Args:
+        api_config (dict): API configuration containing endpoint, key, timeout, etc.
+
+    Returns:
+        dict: Parsed JSON response from the API.
+
+    Raises:
+        Exception: If the request fails or is unsuccessful.
+    """
+    url = api_config["endpoint"]
+    timeout = api_config["timeout"]
+    params = {
+        "function": "TIME_SERIES_INTRADAY",  # Assuming 'intraday' for this case
+        "symbol": api_config["symbol"],
+        "interval": api_config["interval"],
+        "apikey": api_config["key"]
+    }
+
     try:
-        response = requests.get(url, timeout=timeout)
+        logger.info("Sending request to API", url=url, timeout=timeout, params=params)
+        response = requests.get(url, params=params, timeout=timeout)
         response.raise_for_status()
+        logger.info("Request successful", status_code=response.status_code)
         return response.json()
+
     except requests.exceptions.Timeout:
-        logging.error(f"Request timed out after {timeout} seconds.")
+        logger.error("Request timed out", timeout=timeout)
         raise
-    except requests.exceptions.ConnectionError:
-        logging.error("A connection error occurred.")
+
+    except requests.exceptions.ConnectionError as e:
+        logger.error("Connection error occurred", error=str(e))
         raise
+
     except requests.exceptions.HTTPError as http_err:
-        logging.error(f"HTTP error occurred: {http_err}")
+        logger.error("HTTP error occurred", status_code=response.status_code, error=str(http_err))
         raise
+
     except requests.exceptions.RequestException as err:
-        logging.error(f"An unexpected error occurred: {err}")
+        logger.error("Unexpected request exception", error=str(err))
         raise

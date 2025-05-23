@@ -2,36 +2,45 @@
 # Title: Database Connection Setup
 # Author: Christopher Romanillos
 # Description: Handles the creation of the 
-# database engine and sessions. 
+# database engine and sessions.
 # Date: 3/11/24
-# Version: 1.0
+# Version: 1.5
 ##############################################
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
-import logging
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from utils.logging import get_logger
 
-# Load environment variables
+# Setup logging immediately with default configuration
+logger = get_logger(__file__)
+
+# Load environment variables from .env file
 load_dotenv()
 
-# Get database URL from environment variables
-DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")
+# Get the database URL from environment variables
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 if not DATABASE_URL:
-    logging.error("DATABASE_URL is not set in the environment variables.")
-    exit(1)
+    logger.error("Missing environment variable", variable="POSTGRES_DATABASE_URL")
+    raise EnvironmentError("POSTGRES_DATABASE_URL is not set in environment variables.")
+
+# Create engine only once and reuse it for all sessions
+engine = create_engine(DATABASE_URL)
+
+# Session maker bound to the engine (session factory)
+Session = sessionmaker(bind=engine)
+
+logger.info("Database connection pool established")
 
 def get_db_session():
-    """Returns a database session that can be used to interact with the database."""
+    """Returns a database session for interacting with the database."""
     try:
-        # Create the database engine
-        engine = create_engine(DATABASE_URL)
-        # Create session factory
-        Session = sessionmaker(bind=engine)
-        logging.info("Database connection established successfully.")
+        # Return the session factory, no need to recreate the engine
+        logger.info("Providing a session from the connection pool")
         return Session
     except Exception as e:
-        logging.error(f"Failed to create database engine: {e}")
-        exit(1)
+        logger.error("Failed to create database session", error=str(e))
+        raise

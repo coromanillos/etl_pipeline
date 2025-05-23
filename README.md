@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A savings bank employer has tasked you with designing a data pipeline that extracts data from a data source, perform weekly ETL tasks to clean and process the data, and upload data to a cloud data warehouse. The extracted data comes from the following source:
+Asdf test savings bank employer has tasked you with designing a data pipeline that extracts data from a data source, perform weekly ETL tasks to clean and process the data, and upload data to a cloud data warehouse. The extracted data comes from the following source:
 
 - **Alpha Vantage REST API**
 

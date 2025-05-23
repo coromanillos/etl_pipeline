@@ -3,52 +3,44 @@
 # Author: Christopher Romanillos
 # Description: Extracts, transforms, and loads 
 # Alpha Vantage data into the database.
-# Date: 12/08/24
-# Version: 1.3
+# Date: 12/08/24 | Version: 2.1 (refactored for modern logging)
 ##############################################
 
-import logging
-from pathlib import Path
 from extract import extract_data
-from transform import initialize_pipeline, process_raw_data
-from load import load_data  
-
-# Setup logging for ETL process
-log_file = Path(__file__).resolve().parent.parent / 'logs' / 'etl_pipeline.log'
-logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+from transform import process_raw_data
+from postgres_loader import load_data
+from utils.pipeline import initialize_pipeline
+from utils.schema import Base
+from utils.db_connection import engine
 def main():
-    logging.info("ETL Process Started")
-
-    # Step 1: Extract Data
-    extracted_data = extract_data()
-    if extracted_data is None:
-        logging.error("Data extraction failed. ETL process terminated.")
-        return
-
-    # Step 2: Initialize Transformation Pipeline
     try:
-        initialize_pipeline()
-    except Exception as e:
-        logging.error(f"Failed to initialize transformation pipeline: {e}")
-        return
+        config, logger = initialize_pipeline(component_name="main", config_path="../config/config.yaml")
+        logger.info("***** ETL script has started! *****")
+        logger.info("ETL Process Started")
 
-    # Step 3: Transform Data
-    transformed_data = process_raw_data(extracted_data)  # Ensure function accepts extracted_data
-    if transformed_data is None:
-        logging.error("Data transformation failed. ETL process terminated.")
-        return
+        # --- Ensure all tables exist ---
+        Base.metadata.create_all(engine)
 
-    # Step 4: Load Data into Database
-    try:
-        load_data()
-        logging.info("ETL process completed successfully.")
+        # Step 1: Extract
+        raw_file_path = extract_data(config, logger)
+        if not raw_file_path:
+            logger.error("Data extraction failed.")
+            return
+        logger.info(f"Data extraction successful. File saved at: {raw_file_path}")
+
+        # Step 2: Transform
+        processed_file_path = process_raw_data(raw_file_path, config, logger)
+        if not processed_file_path:
+            logger.error("Data transformation failed.")
+            return
+        logger.info(f"Data transformation successful. File saved at: {processed_file_path}")
+
+        # Step 3: Load
+        load_data(processed_file_path, config, logger)
+        logger.info("ETL process completed successfully.")
+
     except Exception as e:
-        logging.error(f"Data loading failed: {e}")
+        logger.exception(f"Fatal error in ETL pipeline: {e}")
 
 if __name__ == "__main__":
     main()
-
-
-
-

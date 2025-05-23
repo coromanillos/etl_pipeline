@@ -1,124 +1,126 @@
-##############################################
+#############################################################################
 # Title: Alpha Vantage Time Series Data Validation
 # Author: Christopher Romanillos
-# Description: ETL pipeline to validate, process, and store time series data.
-# Date: 11/02/24
-# Version: 2.2
-##############################################
+# Description: Validates and transforms intraday time series data
+# Date: 2025-05-18 | Version: 3.4 (refactored for robust error handling and consistent returns)
+#############################################################################
 
-import logging
 import json
+import os
 from datetime import datetime
+from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
-from threading import Lock  # Ensures thread-safe operations
-from utils.utils import setup_logging, load_config
-from utils.file_handler import get_latest_file, save_processed_data
+from typing import Optional
+
+from utils.file_handler import save_processed_data
 from utils.data_validation import transform_and_validate_data
 
-# Load configuration
-config = load_config("../config/config.yaml")
-
-def initialize_pipeline(config_path="../config/config.yaml"):
-    """
-    Loads and validates configuration settings.
-    Ensures all required keys exist.
-    """
-    global config
-    config = load_config(config_path)
-
-    required_keys = ["log_file", "directories", "required_fields"]
-    for key in required_keys:
-        if key not in config:
-            logging.error(f"Missing required configuration key: {key}")
-            raise ValueError(f"Missing required configuration key: {key}")
-
-    setup_logging(config.get("log_file", "default_log_file.log"))
-    logging.info("Pipeline initialized successfully.")
-
-def process_raw_data():
-    """
-    Main function to process raw time series data.
-    Extracts, transforms, and saves validated data.
-    
-    Returns:
-        list: Processed data if successful, None otherwise.
-    """
-    if config is None:
-        raise RuntimeError("Pipeline not initialized. Call initialize_pipeline() first.")
-
+def load_raw_data(raw_file_path: str, logger) -> Optional[dict]:
+    if not os.path.exists(raw_file_path):
+        logger.error("Raw data file does not exist", file=raw_file_path)
+        return None
     try:
-        # Get the latest raw data file
-        raw_data_file = get_latest_file(config["directories"]["raw_data"])
-        if not raw_data_file:
-            raise FileNotFoundError("No raw data files found.")
+        with open(raw_file_path, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        logger.error("Failed to parse JSON file", file=raw_file_path, error=str(e))
+        return None
 
-        with open(raw_data_file, 'r') as file:
-            raw_data = json.load(file)
+def transform_series_data(series: dict, required_fields: list, logger) -> tuple[list, list]:
+    processed_data = []
+    failed_items = []
+    lock = Lock()
 
-        # Extract time series data
-        time_series_data = raw_data.get("Time Series (5min)")
-        if not time_series_data:
-            raise ValueError("Missing 'Time Series (5min)' in raw data.")
-
-        # Process data with parallelism
-        processed_data = []
-        failed_items = []
-        failed_items_lock = Lock()  # Ensures thread safety
-
-        def safe_transform(item, required_fields):
-            """
-            Safely transforms and validates data while handling exceptions.
-            Uses a lock to ensure thread-safe logging and failed item tracking.
-            """
-            try:
-                return transform_and_validate_data(item, required_fields)
-            except Exception as e:
-                error_message = f"Error transforming item {str(item)[:100]}: {e}"  # Truncate long logs
-                with failed_items_lock:
-                    logging.error(error_message)
-                    failed_items.append({"item": item, "error": str(e)})
-                return None
-
-        with ThreadPoolExecutor() as executor:
-            results = executor.map(
-                lambda item: safe_transform(item, config["required_fields"]),
-                time_series_data.items()
-            )
-            processed_data = [result for result in results if result is not None]
-
-        if not processed_data:
-            logging.warning("No valid data was processed.")
-            return None  # Return None instead of raising an exception
-
-        # Save processed data
+    def safe_transform(item):
         try:
-            save_processed_data(processed_data, config["directories"]["processed_data"])
-        except Exception as e:
-            logging.error(f"Error saving processed data: {e}")
+            return transform_and_validate_data(item, required_fields)
+        except Exception:
+            with lock:
+                failed_items.append(item)
             return None
 
-        # Log failed items to a file for review
-        if failed_items:
-            failed_items_file = f"{config['directories']['logs']}/failed_items_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-            with open(failed_items_file, "w") as f:
-                for failure in failed_items:
-                    f.write(f"{failure}\n")
-            logging.warning(f"Some items failed processing. Details saved in {failed_items_file}")
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(safe_transform, series.items())
+        processed_data = [r for r in results if r]
+    return processed_data, failed_items
 
-        logging.info("ETL pipeline completed successfully.")
-        return processed_data  # Return processed data for external use
+def write_failed_log(failed_items: list, log_dir: str, logger) -> None:
+    """Save failed transformation items to a timestamped file in processed_data dir."""
+    if not failed_items:
+        return
 
-    except FileNotFoundError as e:
-        logging.error(f"Pipeline error: {e}")
-        raise  # Raise FileNotFoundError for main.py to handle
-    except ValueError as e:
-        logging.error(f"Pipeline validation error: {e}")
-        raise  # Raise ValueError for main.py to handle
+    fail_path = os.path.join(
+        log_dir,
+        f"failed_items_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+    )
+    try:
+        with open(fail_path, "w") as f:
+            for item in failed_items:
+                f.write(f"{item}\n")
+        logger.warning(
+            f"{len(failed_items)} records failed during transformation. Log saved to: {fail_path}",
+            failed_count=len(failed_items),
+            fail_path=fail_path
+        )
     except Exception as e:
-        logging.error(f"Unexpected pipeline failure: {e}")
-        return None  # Return None instead of crashing
+        logger.error("Failed to write failed items log", error=str(e), fail_path=fail_path)
 
-# Only execute when running the script directly
-if __name__ == "__main__":
-    initialize_pipeline()
-    process_raw_data()
+def summarize_transformation(total: int, successful: int, failed: int, logger) -> None:
+    logger.info(
+        "Transformation Summary",
+        total_records=total,
+        successfully_transformed=successful,
+        failed_transformations=failed
+    )
+
+def process_raw_data(raw_file_path: str, config: dict, logger) -> Optional[str]:
+    """
+    Process, validate, and transform raw intraday time series data.
+    Returns:
+        Path to processed file if successful, else None.
+    """
+    try:
+        raw_data = load_raw_data(raw_file_path, logger)
+        if not raw_data:
+            logger.error("No raw data loaded; aborting transformation", file=raw_file_path)
+            return None
+
+        series = raw_data.get("Time Series (5min)")
+        if not series:
+            logger.error("Missing 'Time Series (5min)' in data", file=raw_file_path)
+            return None
+
+        total_records = len(series)
+
+        processed_data, failed_items = transform_series_data(
+            series, config["transform"]["required_fields"], logger
+        )
+
+        if not processed_data:
+            logger.warning("No valid data processed.")
+            return None
+
+        processed_path = save_processed_data(
+            processed_data, config["directories"]["processed_data"]
+        )
+        if not processed_path:
+            logger.error("Failed to save processed data file.", directory=config["directories"]["processed_data"])
+            return None
+
+        logger.info("Data transformation completed. Processed file saved.", processed_path=processed_path)
+
+        # Use processed_data directory for failed items instead of a non-existent logs directory
+        write_failed_log(failed_items, config["directories"]["processed_data"], logger)
+
+        # Log final transformation summary as structured log
+        summarize_transformation(
+            total=total_records,
+            successful=len(processed_data),
+            failed=len(failed_items),
+            logger=logger
+        )
+        return processed_path
+
+    except Exception as e:
+        logger.exception("Transform pipeline failed with exception", error=str(e))
+        return None
