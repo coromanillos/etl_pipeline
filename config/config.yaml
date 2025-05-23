@@ -19,7 +19,6 @@ validation:
 directories:
   raw_data: "../data/raw_data"
   processed_data: "../data/processed_data"
-  # logs: "../../logs" # No longer needed for logging, but can keep for data dirs if desired
 
 # Logging configuration (centralized, modern: STDOUT/JSON)
 logging:
