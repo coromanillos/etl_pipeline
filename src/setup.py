@@ -1,60 +1,57 @@
 ##############################################
 # Title: Database setup script
 # Author: Christopher Romanillos
-# Description: Creates 
+# Description: Creates PostgreSQL tables
+# for ETL pipeline using SQLAlchemy.
 # Date: 11/23/24
-# Version: 1.0
+# Version: 1.3
 ##############################################
 
-import logging
+import os
+import sys
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from utils.schema import Base 
 from dotenv import load_dotenv
-import os 
-from pathlib import Path
+from utils.schema import Base
+from utils.logging import get_logger  # <- Correct structured logger
 
 # Load environment variables from a .env file
 load_dotenv()
 
-# Configure logging
-log_path = os.path.join(os.path.dirname(__file__), '../logs/setup.log')
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# Setup structured logger
+logger = get_logger(module_name="setup.py")
 
-# Set your PostgreSQL database URL
+# Retrieve PostgreSQL connection URL
 POSTGRES_DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL")
-if not POSTGRES_DATABASE_URL:
-    logging.error("DATABASE_URL is not set in the environment.")
-    raise ValueError("DATABASE_URL is required but not set.")
 
-# Create the engine to connect to PostgreSQL
+if not POSTGRES_DATABASE_URL:
+    logger.error("Environment variable not set", variable="POSTGRES_DATABASE_URL")
+    sys.exit(1)
+
+# Create SQLAlchemy engine
 try:
     engine = create_engine(POSTGRES_DATABASE_URL)
-    logging.info("Database engine created successfully.")
+    logger.info("Database engine created successfully")
 except SQLAlchemyError as e:
-    logging.error(f"Error creating database engine: {e}")
-    raise
+    logger.exception("Failed to create database engine")
+    sys.exit(1)
 
 def create_tables(drop_existing=False):
-    """Create database tables"""
+    """Create (and optionally drop) PostgreSQL tables using SQLAlchemy metadata."""
     try:
         if drop_existing:
+            logger.info("Dropping existing tables")
             Base.metadata.drop_all(engine)
-            logging.info("Tables dropped successfully.")
+            logger.info("Tables dropped successfully")
+
+        logger.info("Creating tables")
         Base.metadata.create_all(engine)
-        logging.info("Tables created successfully.")
-    except SQLAlchemyError as e:
-        logging.error(f"Error dropping tables: {e}")
-        raise
+        logger.info("Tables created successfully")
+    except SQLAlchemyError:
+        logger.exception("Database setup failed during create_tables()")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    # Run the setup process
-    logging.info("Starting database setup...")
-    try:
-        create_tables(drop_existing=False)
-        logging.info("Database setup completed successfully.")
-    except Exception as e:
-        logging.error(f"An error occurred during setup: {e}")
+    logger.info("Starting database setup process")
+    create_tables(drop_existing=False)
+

@@ -1,5 +1,4 @@
-# Configuration settings utilized via python.
-
+# config.yaml file
 api:
   endpoint: https://www.alphavantage.co/query
   key: your_api_key
@@ -20,15 +19,32 @@ validation:
 directories:
   raw_data: "../data/raw_data"
   processed_data: "../data/processed_data"
+  # logs: "../../logs" # No longer needed for logging, but can keep for data dirs if desired
 
-# Path for modular logging scripts
+# Logging configuration (centralized, modern: STDOUT/JSON)
 logging:
-  log_file: "../logs/etl_pipeline.log"
-  level: "INFO" # Can be DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: DEBUG # Set log level: DEBUG, INFO, ERROR, etc.
+  format: json # Structured logs (JSON) for aggregation/analysis
+  # No log files needed for modern container logging
 
-required_fields:
-  - "1. open"
-  - "2. high"
-  - "3. low"
-  - "4. close"
-  - "5. volume"
+# Extract-specific configuration
+extract:
+  required_fields:
+    - "1. open"
+    - "2. high"
+    - "3. low"
+    - "4. close"
+    - "5. volume"
+
+# Transform-specific configuration
+transform:
+  required_fields:
+    - "1. open"
+    - "2. high"
+    - "3. low"
+    - "4. close"
+    - "5. volume"
+
+# Postgres Loader-specific configuration
+postgres_loader:
+  # Logging now handled globally; no file setting here

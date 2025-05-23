@@ -1,15 +1,17 @@
 ##############################################
-# Title: Modular File handling Script
+# Title: Modular File Handling Script
 # Author: Christopher Romanillos
-# Description: Modular utils script
-# Date: 12/01/24
-# Version: 1.1
+# Description: Modular utils script with Docker logging support.
+# Date: 2025-05-18
+# Version: 1.6 (refactored for consistent return values and modern logging)
 ##############################################
+
 import json
-import logging
 from datetime import datetime
 from pathlib import Path
-import logging
+from utils.logging import get_logger
+
+logger = get_logger(__file__)
 
 def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
     """
@@ -31,34 +33,68 @@ def get_latest_file(directory: str, pattern: str = "*.json") -> Path:
         if not dir_path.is_dir():
             raise NotADirectoryError(f"{directory} is not a valid directory.")
 
-        # Match files based on the provided pattern
         files = list(dir_path.glob(pattern))
         if not files:
             raise FileNotFoundError(f"No files matching pattern '{pattern}' found in {directory}.")
 
-        # Return the most recently modified or created file
-        latest_file = max(files, key=lambda f: f.stat().st_mtime)  # Use st_mtime for last modified
-        logging.info(f"Latest file found: {latest_file}")
+        latest_file = max(files, key=lambda f: f.stat().st_mtime)
+        logger.info("Latest file found", file=str(latest_file))
         return latest_file
+
     except Exception as e:
-        logging.error(f"Error locating the latest file: {e}")
+        logger.error("Error locating the latest file", directory=directory, pattern=pattern, error=str(e))
         raise
 
-
 def save_processed_data(data, processed_data_dir):
+    """
+    Save processed data as a JSON file with a timestamped filename.
+
+    Args:
+        data (dict or list): The processed data to save.
+        processed_data_dir (str): The directory where the file should be saved.
+
+    Returns:
+        str or None: The path to the saved file if successful, otherwise None.
+    """
     try:
-        # Ensure the processed data directory exists
         processed_data_path = Path(processed_data_dir)
         processed_data_path.mkdir(parents=True, exist_ok=True)
 
-        # Construct the file name with timestamp
-        file_name = processed_data_path / f"processed_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        
-        # Save the data to a JSON file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_name = processed_data_path / f"processed_data_{timestamp}.json"
+
         with open(file_name, 'w') as file:
             json.dump(data, file, default=str)
-        
-        logging.info(f"Processed data saved to {file_name}.")
+
+        logger.info("Processed data saved", file=str(file_name))
+        return str(file_name)
     except Exception as e:
-        logging.error(f"Error saving processed data: {e}")
-        raise
+        logger.error("Error saving processed data", directory=processed_data_dir, error=str(e))
+        return None
+
+def save_raw_data(data, raw_data_dir):
+    """
+    Save raw data as a JSON file with a timestamped filename.
+
+    Args:
+        data (dict or list): The raw data to save.
+        raw_data_dir (str): The directory where the file should be saved.
+
+    Returns:
+        str or None: The path to the saved file if successful, otherwise None.
+    """
+    try:
+        raw_data_path = Path(raw_data_dir)
+        raw_data_path.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_name = raw_data_path / f"raw_data_{timestamp}.json"
+
+        with open(file_name, 'w') as file:
+            json.dump(data, file, default=str)
+
+        logger.info("Raw data saved", file=str(file_name))
+        return str(file_name)
+    except Exception as e:
+        logger.error("Error saving raw data", directory=raw_data_dir, error=str(e))
+        return None
