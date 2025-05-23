@@ -10,3 +10,5 @@ Problems I ran into:
 
 - Accessing docker logs..?
 - Data governance on Cloud providers AWS/Azure
+
+- I had always thought that 'testing' stopped at just executing the program via docker containers, and if everything went as planned, and logs that were descriptive told you what you wanted, then tests were complete. The reality however, was that testing is more than just if your project "works", it comes down to verifying the durability of core functions, methods, utility logic, modules working together, bug prevention, scalability and performance. I had not done anything of the nature up until now, so I was prompted to remove the copy of my project in the test directory, and replace it with a variety of tests.
