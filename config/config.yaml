@@ -1,4 +1,5 @@
 # config.yaml file
+
 api:
   endpoint: https://www.alphavantage.co/query
   key: your_api_key
@@ -6,7 +7,6 @@ api:
   symbol: IBM
   interval: 5min
 
-# Validation rules
 validation:
   alpha_vantage_intraday:
     required_keys:
@@ -19,14 +19,14 @@ validation:
 directories:
   raw_data: "../data/raw_data"
   processed_data: "../data/processed_data"
+  dags: "../dags" # Add dags folder path for Airflow DAGs
+  logs: "../logs" # Add logs folder for Airflow logs
 
-# Logging configuration (centralized, modern: STDOUT/JSON)
 logging:
-  level: DEBUG # Set log level: DEBUG, INFO, ERROR, etc.
-  format: json # Structured logs (JSON) for aggregation/analysis
-  # No log files needed for modern container logging
+  level: DEBUG # Log level
+  format: json # Structured JSON logging for container aggregation
+  # No log files needed here; logs routed to Airflow's logging system or stdout
 
-# Extract-specific configuration
 extract:
   required_fields:
     - "1. open"
@@ -35,7 +35,6 @@ extract:
     - "4. close"
     - "5. volume"
 
-# Transform-specific configuration
 transform:
   required_fields:
     - "1. open"
@@ -44,6 +43,15 @@ transform:
     - "4. close"
     - "5. volume"
 
-# Postgres Loader-specific configuration
 postgres_loader:
-  # Logging now handled globally; no file setting here
+  # Logging is centralized globally
+  connection_string: "postgresql://cromanillos:werc3871874@db:5432/etl_project" # Add your DB connection string here
+  schema: public
+  table: your_target_table # Replace with your target table name
+
+airflow:
+  executor: LocalExecutor # Matches your docker-compose .env setting
+  dags_folder: "../dags"
+  logs_folder: "../logs"
+  fernet_key: "PUT_YOUR_FERNET_KEY_HERE" # From .env; keep here for reference or runtime use
+  webserver_secret_key: "PUT_YOUR_SECRET_KEY_HERE"
