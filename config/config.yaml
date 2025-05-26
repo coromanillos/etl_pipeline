@@ -53,5 +53,3 @@ airflow:
   executor: LocalExecutor # Matches your docker-compose .env setting
   dags_folder: "../dags"
   logs_folder: "../logs"
-  fernet_key: "PUT_YOUR_FERNET_KEY_HERE" # From .env; keep here for reference or runtime use
-  webserver_secret_key: "PUT_YOUR_SECRET_KEY_HERE"
