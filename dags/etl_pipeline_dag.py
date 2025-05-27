@@ -1,12 +1,12 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-from extract import extract_data
-from transform import process_raw_data
-from postgres_loader import load_data
-from utils.pipeline import initialize_pipeline
-from utils.schema import Base
-from utils.db_connection import engine
+from src.extract import extract_data
+from src.transform import process_raw_data
+from src.postgres_loader import load_data
+from src.utils.pipeline import initialize_pipeline
+from src.utils.schema import Base
+from src.utils.db_connection import engine
 
 # Global vars to re-use across tasks
 CONFIG, LOGGER = initialize_pipeline(component_name="etl_dag", config_path="../config/config.yaml")
