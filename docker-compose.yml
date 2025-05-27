@@ -15,31 +15,79 @@ services:
       interval: 2s
       timeout: 2s
       retries: 10
-    # Uncomment if you need Postgres data to persist between runs:
+    # Uncomment to persist Postgres data:
     # volumes:
     #   - postgres_data:/var/lib/postgresql/data
 
-  app:
-    build:
-      context: . # root of your project
-      dockerfile: Dockerfile
-    container_name: etl_data_pipeline
+  airflow-init:
+    image: apache/airflow:3.0.1-python3.10
+    container_name: airflow_init
     depends_on:
       db:
         condition: service_healthy
     env_file:
-      - .env # Loads environment variables from .env
+      - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW_UID: 50000
+      AIRFLOW_GID: 50000
     volumes:
-      - ./src:/app/src
-      - ./logs:/app/logs
-      - ./data:/app/data
-      - ./config:/app/config
-    working_dir: /app/src
-    command: python main.py
-    logging:
-      driver: json-file
-# Uncomment if you use persistent Postgres storage:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./src:/opt/airflow/src # Mount your ETL code here if you want to import it in DAGs
+    entrypoint: >
+      bash -c "
+      airflow db upgrade &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com
+      "
+
+  airflow-webserver:
+    image: apache/airflow:3.0.1-python3.10
+    container_name: airflow_webserver
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW_UID: 50000
+      AIRFLOW_GID: 50000
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./src:/opt/airflow/src
+    command: webserver
+
+  airflow-scheduler:
+    image: apache/airflow:3.0.1-python3.10
+    container_name: airflow_scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW_UID: 50000
+      AIRFLOW_GID: 50000
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./src:/opt/airflow/src
+    command: scheduler
+# Uncomment if you want to persist Postgres data:
 # volumes:
 #   postgres_data:
