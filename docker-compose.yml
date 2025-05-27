@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   db:
     image: postgres:16
@@ -15,7 +17,7 @@ services:
       interval: 2s
       timeout: 2s
       retries: 10
-    # Uncomment to persist Postgres data:
+    # Uncomment below if you want to persist Postgres data
     # volumes:
     #   - postgres_data:/var/lib/postgresql/data
 
@@ -29,14 +31,14 @@ services:
       - .env
     environment:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW_UID: 50000
       AIRFLOW_GID: 50000
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./src:/opt/airflow/src # Mount your ETL code here if you want to import it in DAGs
+      - ./src:/opt/airflow/src
     entrypoint: >
       bash -c "
       airflow db upgrade &&
@@ -55,7 +57,7 @@ services:
       - .env
     environment:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW_UID: 50000
       AIRFLOW_GID: 50000
     ports:
@@ -79,7 +81,7 @@ services:
       - .env
     environment:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW_UID: 50000
       AIRFLOW_GID: 50000
     volumes:
@@ -88,6 +90,6 @@ services:
       - ./plugins:/opt/airflow/plugins
       - ./src:/opt/airflow/src
     command: scheduler
-# Uncomment if you want to persist Postgres data:
+# Uncomment to persist database data:
 # volumes:
 #   postgres_data:
