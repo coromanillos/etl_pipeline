@@ -1,6 +1,26 @@
 version: "3.8"
 
+volumes:
+  postgres_data:
+
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:3.0.1-python3.10
+  env_file:
+    - .env
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    AIRFLOW_UID: 50000
+    AIRFLOW_GID: 50000
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./src:/opt/airflow/src
+
 services:
+
   db:
     image: postgres:16
     container_name: postgres_db
@@ -11,34 +31,20 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
       interval: 2s
       timeout: 2s
       retries: 10
-    # Uncomment below if you want to persist Postgres data
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data
 
   airflow-init:
-    image: apache/airflow:3.0.1-python3.10
+    <<: *airflow-common
     container_name: airflow_init
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW_UID: 50000
-      AIRFLOW_GID: 50000
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./plugins:/opt/airflow/plugins
-      - ./src:/opt/airflow/src
     entrypoint: >
       bash -c "
       airflow db upgrade &&
@@ -46,50 +52,28 @@ services:
       "
 
   airflow-webserver:
-    image: apache/airflow:3.0.1-python3.10
+    <<: *airflow-common
     container_name: airflow_webserver
     depends_on:
       airflow-init:
         condition: service_completed_successfully
       db:
         condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW_UID: 50000
-      AIRFLOW_GID: 50000
     ports:
       - "8080:8080"
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./plugins:/opt/airflow/plugins
-      - ./src:/opt/airflow/src
     command: webserver
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   airflow-scheduler:
-    image: apache/airflow:3.0.1-python3.10
+    <<: *airflow-common
     container_name: airflow_scheduler
     depends_on:
       airflow-init:
         condition: service_completed_successfully
       db:
         condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW_UID: 50000
-      AIRFLOW_GID: 50000
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./plugins:/opt/airflow/plugins
-      - ./src:/opt/airflow/src
     command: scheduler
-# Uncomment to persist database data:
-# volumes:
-#   postgres_data:
