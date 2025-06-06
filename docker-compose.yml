@@ -1,79 +1,43 @@
 version: "3.8"
 
-volumes:
-  postgres_data:
-
-x-airflow-common:
-  &airflow-common
-  image: apache/airflow:3.0.1-python3.10
-  env_file:
-    - .env
-  environment:
-    AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-    AIRFLOW_UID: 50000
-    AIRFLOW_GID: 50000
-  volumes:
-    - ./dags:/opt/airflow/dags
-    - ./logs:/opt/airflow/logs
-    - ./plugins:/opt/airflow/plugins
-    - ./src:/opt/airflow/src
-
 services:
+  etl_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: etl_app
+    environment:
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}         # Or use an IAM role if in ECS/EKS
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      - db
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: etl-pipeline-logs
+        awslogs-stream: etl-app
+    networks:
+      - etl_net
 
   db:
     image: postgres:16
     container_name: postgres_db
     restart: always
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
-      interval: 2s
-      timeout: 2s
-      retries: 10
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - etl_net
 
-  airflow-init:
-    <<: *airflow-common
-    container_name: airflow_init
-    depends_on:
-      db:
-        condition: service_healthy
-    entrypoint: >
-      bash -c "
-      airflow db upgrade &&
-      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com
-      "
+volumes:
+  pgdata:
 
-  airflow-webserver:
-    <<: *airflow-common
-    container_name: airflow_webserver
-    depends_on:
-      airflow-init:
-        condition: service_completed_successfully
-      db:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
-    command: webserver
-    healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  airflow-scheduler:
-    <<: *airflow-common
-    container_name: airflow_scheduler
-    depends_on:
-      airflow-init:
-        condition: service_completed_successfully
-      db:
-        condition: service_healthy
-    command: scheduler
+networks:
+  etl_net:
