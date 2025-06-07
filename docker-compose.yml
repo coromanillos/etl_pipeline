@@ -2,13 +2,13 @@ version: "3.8"
 
 services:
   etl_app:
+    container_name: etl_app
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: etl_app
     environment:
       AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}         # Or use an IAM role if in ECS/EKS
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}             # Use .env or secrets manager
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     depends_on:
       - db
@@ -20,10 +20,13 @@ services:
         awslogs-stream: etl-app
     networks:
       - etl_net
+    volumes:
+      - .:/app                                             # Mount local code (optional)
+      - logs:/var/log/etl_app                              # Standardized container logs (optional)
 
   db:
-    image: postgres:16
     container_name: postgres_db
+    image: postgres:16
     restart: always
     ports:
       - "5432:5432"
@@ -38,6 +41,7 @@ services:
 
 volumes:
   pgdata:
+  logs:                                                   # Optional: central log volume
 
 networks:
   etl_net:
