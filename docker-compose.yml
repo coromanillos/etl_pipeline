@@ -1,4 +1,4 @@
-# Docker compose
+# Docker Compose 
 version: "3.8"
 
 services:
@@ -23,7 +23,17 @@ services:
       - etl_net
     volumes:
       - .:/app
-      - logs:/var/log/etl_app
+
+  fluentbit:
+    image: fluent/fluent-bit:latest
+    container_name: fluentbit
+    restart: always
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./fluentbit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./fluentbit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+    networks:
+      - etl_net
 
   db:
     container_name: postgres_db
@@ -42,7 +52,6 @@ services:
 
 volumes:
   pgdata:
-  logs:
 
 networks:
   etl_net:
