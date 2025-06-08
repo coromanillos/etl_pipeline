@@ -53,3 +53,11 @@ airflow:
   executor: LocalExecutor # Matches your docker-compose .env setting
   dags_folder: "../dags"
   logs_folder: "../logs"
+
+notifications:
+  email_on_failure: true
+  email_on_retry: false
+  recipients:
+    - "alerts@yourdomain.com"
+    - "data.team@yourdomain.com"
+

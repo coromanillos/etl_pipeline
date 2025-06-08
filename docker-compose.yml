@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      AWS_REGION: us-east-1
+      AWS_REGION: us-east-1     # Might have to change this to us-east-2*
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
@@ -19,13 +19,14 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
+    restart: unless-stopped 
     networks:
       - etl_net
     volumes:
       - .:/app
 
   fluentbit:
-    image: fluent/fluent-bit:latest
+    image: fluent/fluent-bit:2.2.2
     container_name: fluentbit
     restart: always
     volumes:
