@@ -1,3 +1,4 @@
+# Docker compose
 version: "3.8"
 
 services:
@@ -8,21 +9,21 @@ services:
       dockerfile: Dockerfile
     environment:
       AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}             # Use .env or secrets manager
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
     depends_on:
       - db
     logging:
-      driver: awslogs
+      driver: json-file
       options:
-        awslogs-region: us-east-1
-        awslogs-group: etl-pipeline-logs
-        awslogs-stream: etl-app
+        max-size: "10m"
+        max-file: "5"
     networks:
       - etl_net
     volumes:
-      - .:/app                                             # Mount local code (optional)
-      - logs:/var/log/etl_app                              # Standardized container logs (optional)
+      - .:/app
+      - logs:/var/log/etl_app
 
   db:
     container_name: postgres_db
@@ -41,7 +42,7 @@ services:
 
 volumes:
   pgdata:
-  logs:                                                   # Optional: central log volume
+  logs:
 
 networks:
   etl_net:
