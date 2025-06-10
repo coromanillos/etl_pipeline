@@ -1,12 +1,14 @@
-# .env
-
-# === REDSHIFT CONFIGURATION ===
+# =============================
+# REDSHIFT CONFIGURATION
+# =============================
 REDSHIFT_HOST=boot-xqvzqus7.c1.kafka-serverless.us-east-2.amazonaws.com
 REDSHIFT_PORT=5439
 REDSHIFT_DB=test-cluster-1
 REDSHIFT_SCHEMA=public
 
-# === POSTGRES CONFIGURATION ===
+# =============================
+# POSTGRES CONFIGURATION
+# =============================
 POSTGRES_USER=cromanillos
 POSTGRES_PASSWORD=werc3871874
 POSTGRES_DB=etl_project
@@ -14,8 +16,16 @@ POSTGRES_HOST=db
 POSTGRES_PORT=5432
 DATABASE_URL=postgresql://cromanillos:werc3871874@db:5432/etl_project
 
-# === AIRFLOW CONFIGURATION ===
+# =============================
+# AIRFLOW CONFIGURATION
+# =============================
 AIRFLOW__CORE__EXECUTOR=LocalExecutor
 AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://cromanillos:werc3871874@db:5432/etl_project
 AIRFLOW__CORE__FERNET_KEY=P-g3OjEatT9s930lJ_JeC_Nm8ZbLiktLq1NE99z2570=
 AIRFLOW__WEBSERVER__SECRET_KEY=CHANGE_THIS_TO_A_SECURE_RANDOM_STRING
+
+# =============================
+# OTHER / OPTIONAL CONFIGS
+# =============================
+# Email notifications (used inside Airflow DAG via config.yaml)
+ALERT_EMAILS=cromanillos99@gmail.com
