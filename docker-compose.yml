@@ -1,4 +1,3 @@
-# Docker Compose 
 version: "3.8"
 
 services:
@@ -8,10 +7,20 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      AWS_REGION: us-east-1     # Might have to change this to us-east-2*
+      AWS_REGION: us-east-1
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
+
+      # === SMTP SETTINGS FOR ALERT EMAILS ===
+      AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
+      AIRFLOW__SMTP__SMTP_STARTTLS: True
+      AIRFLOW__SMTP__SMTP_SSL: False
+      AIRFLOW__SMTP__SMTP_PORT: 587
+      AIRFLOW__SMTP__SMTP_USER: ${ALERT_EMAILS}
+      AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
+      AIRFLOW__SMTP__SMTP_MAIL_FROM: ${ALERT_EMAILS}
+
     depends_on:
       - db
     logging:
