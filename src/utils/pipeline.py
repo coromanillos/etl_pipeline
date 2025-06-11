@@ -1,24 +1,24 @@
 #############################################################################
-# Title: Centralized logging setup (modernized)
-# Author: Christopher Romanillos, Copilot
-# Description: Loads config, sets up structured logger for a pipeline component
-# Date: 2025-05-18 | Version: 2.0 
+# Title: Centralized Logging + Config Loader
+# Author: Christopher Romanillos
+# Description: Loads config and logger for a named pipeline component
+# Date: 2025-05-18 | Version: 2.1
 #############################################################################
 
 from utils.logging import get_logger, load_config
 
-def initialize_pipeline(component_name: str, config_path: str = "../config/config.yaml"):
+def initialize_pipeline(component_name: str, config_path: str = "/opt/airflow/config/config.yaml"):
     """
-    Initializes the pipeline by loading configuration and setting up the logger.
+    Loads configuration and sets up a structured logger for the given component.
 
     Args:
-        component_name (str): Name of the script or pipeline component (e.g., 'extract', 'transform').
-        config_path (str): Path to the YAML config file.
+        component_name (str): Logical name of the component (e.g. 'extract', 'transform', 'etl_dag').
+        config_path (str): Path to config.yaml, defaulting to Airflow container location.
 
     Returns:
-        tuple: (config dict, logger instance)
+        tuple: (dict: config, Logger: structured logger)
     """
     config = load_config(config_path)
     logger = get_logger(module_name=component_name, config_path=config_path)
-    logger.info(f"{component_name.capitalize()} pipeline initialized.")
+    logger.info(f"[{component_name}] pipeline initialized.")
     return config, logger

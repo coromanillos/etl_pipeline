@@ -1,32 +1,51 @@
-# .env 
-# =============================
-# REDSHIFT CONFIGURATION
-# =============================
+# =====================================
+# REDSHIFT CONFIGURATION (NO SECRETS)
+# =====================================
 REDSHIFT_HOST=boot-xqvzqus7.c1.kafka-serverless.us-east-2.amazonaws.com
 REDSHIFT_PORT=5439
 REDSHIFT_DB=test-cluster-1
 REDSHIFT_SCHEMA=public
+REDSHIFT_TABLE=staging_data  # added
 
-# =============================
+# =====================================
 # POSTGRES CONFIGURATION
-# =============================
+# =====================================
 POSTGRES_USER=cromanillos
-POSTGRES_PASSWORD=werc3871874
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=etl_project
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
-DATABASE_URL=postgresql://cromanillos:werc3871874@db:5432/etl_project
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
 
-# =============================
+# =====================================
+# ALPHA VANTAGE API
+# =====================================
+ALPHA_VANTAGE_API_KEY=your_real_api_key_here
+
+# =====================================
 # AIRFLOW CONFIGURATION
-# =============================
+# =====================================
 AIRFLOW__CORE__EXECUTOR=LocalExecutor
-AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://cromanillos:werc3871874@db:5432/etl_project
+AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=${DATABASE_URL}
 AIRFLOW__CORE__FERNET_KEY=P-g3OjEatT9s930lJ_JeC_Nm8ZbLiktLq1NE99z2570=
 AIRFLOW__WEBSERVER__SECRET_KEY=CHANGE_THIS_TO_A_SECURE_RANDOM_STRING
+AIRFLOW__EMAIL__EMAIL_BACKEND=airflow.utils.email.send_email_smtp
+AIRFLOW__SMTP__SMTP_HOST=smtp.gmail.com
+AIRFLOW__SMTP__SMTP_STARTTLS=True
+AIRFLOW__SMTP__SMTP_SSL=False
+AIRFLOW__SMTP__SMTP_USER=${SMTP_USER}
+AIRFLOW__SMTP__SMTP_PASSWORD=${SMTP_PASSWORD}
+AIRFLOW__SMTP__SMTP_PORT=587
+AIRFLOW__SMTP__SMTP_MAIL_FROM=${SMTP_USER}
 
-# =============================
-# OTHER / OPTIONAL CONFIGS
-# =============================
-# Email notifications (used inside Airflow DAG via config.yaml)
-ALERT_EMAILS=cromanillos99@gmail.com
+# =====================================
+# NOTIFICATIONS
+# =====================================
+ALERT_EMAILS=cromanillos99@gmail.com,
+
+# =====================================
+# S3/LOGGING
+# =====================================
+S3_BUCKET=your-s3-bucket-name
+S3_REGION=us-east-1
+LOG_GROUP_NAME=etl-log-group
