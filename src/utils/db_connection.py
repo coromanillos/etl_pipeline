@@ -16,16 +16,18 @@ from utils.logging import get_logger
 # Setup logging immediately with default configuration
 logger = get_logger(__file__)
 
-# Load environment variables from .env file
+# load_dotenv is useful for local development; in production Docker loads env vars directly
 load_dotenv()
+
 
 # Get the database URL from environment variables
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 if not DATABASE_URL:
-    logger.error("Missing environment variable", variable="POSTGRES_DATABASE_URL")
-    raise EnvironmentError("POSTGRES_DATABASE_URL is not set in environment variables.")
+    logger.error("Missing environment variable: DATABASE_URL")
+    raise EnvironmentError("DATABASE_URL is not set in environment variables.")
+
 
 # Create engine only once and reuse it for all sessions
 engine = create_engine(DATABASE_URL)

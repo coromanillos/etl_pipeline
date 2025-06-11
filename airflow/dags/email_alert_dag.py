@@ -1,5 +1,6 @@
 import os
 import yaml
+from pathlib import Path
 from datetime import datetime, timedelta
 
 from airflow import DAG
@@ -10,16 +11,20 @@ from airflow.utils.trigger_rule import TriggerRule
 
 # Load configuration from YAML
 def load_config():
-    with open('/app/config/config.yaml', 'r') as f:
+    config_path = Path("/app/config/config.yaml")
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file not found at {config_path}")
+    with config_path.open("r") as f:
         return yaml.safe_load(f)
 
 config = load_config()
+
 notification_recipients = config['notifications']['recipients']
-alert_email_from = os.getenv("ALERT_EMAILS")
+alert_email_from = os.getenv("ALERT_FROM_EMAIL")
 
 default_args = {
     'owner': 'airflow',
-    'email_on_failure': False,  # We'll handle email ourselves
+    'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=5)
