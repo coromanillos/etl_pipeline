@@ -14,21 +14,22 @@ services:
 
       # === SMTP SETTINGS FOR ALERT EMAILS ===
       AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
-      AIRFLOW__SMTP__SMTP_STARTTLS: True
-      AIRFLOW__SMTP__SMTP_SSL: False
+      AIRFLOW__SMTP__SMTP_STARTTLS: "TRUE"
+      AIRFLOW__SMTP__SMTP_SSL: "FALSE"
       AIRFLOW__SMTP__SMTP_PORT: 587
       AIRFLOW__SMTP__SMTP_USER: ${ALERT_EMAILS}
       AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
       AIRFLOW__SMTP__SMTP_MAIL_FROM: ${ALERT_EMAILS}
 
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "5"
-    restart: unless-stopped 
+    restart: unless-stopped
     networks:
       - etl_net
     volumes:
@@ -49,6 +50,11 @@ services:
     container_name: postgres_db
     image: postgres:16
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
     environment:
