@@ -14,16 +14,15 @@ services:
 
       # === SMTP SETTINGS FOR ALERT EMAILS ===
       AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
-      AIRFLOW__SMTP__SMTP_STARTTLS: "TRUE"
-      AIRFLOW__SMTP__SMTP_SSL: "FALSE"
+      AIRFLOW__SMTP__SMTP_STARTTLS: "True"
+      AIRFLOW__SMTP__SMTP_SSL: "False"
       AIRFLOW__SMTP__SMTP_PORT: 587
       AIRFLOW__SMTP__SMTP_USER: ${ALERT_EMAILS}
       AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
       AIRFLOW__SMTP__SMTP_MAIL_FROM: ${ALERT_EMAILS}
 
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     logging:
       driver: json-file
       options:
@@ -34,6 +33,14 @@ services:
       - etl_net
     volumes:
       - .:/app
+    labels:
+      app: etl_pipeline
+      service: airflow_webserver
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
 
   fluentbit:
     image: fluent/fluent-bit:2.2.2
@@ -45,16 +52,25 @@ services:
       - ./fluentbit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
     networks:
       - etl_net
+    read_only: true
+    labels:
+      app: etl_pipeline
+      service: fluentbit
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:2020/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "256M"
 
   db:
     container_name: postgres_db
     image: postgres:16
     restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     ports:
       - "5432:5432"
     environment:
@@ -63,8 +79,21 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - etl_net
+    labels:
+      app: etl_pipeline
+      service: database
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
 
 volumes:
   pgdata:

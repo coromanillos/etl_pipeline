@@ -1,9 +1,7 @@
-# config.yaml file
-
 api:
   endpoint: https://www.alphavantage.co/query
-  key: your_api_key
-  timeout: 30 # in seconds
+  key: ${ALPHA_VANTAGE_API_KEY}
+  timeout: 30
   symbol: IBM
   interval: 5min
 
@@ -19,13 +17,12 @@ validation:
 directories:
   raw_data: "../data/raw_data"
   processed_data: "../data/processed_data"
-  dags: "../dags" # Add dags folder path for Airflow DAGs
-  logs: "../logs" # Add logs folder for Airflow logs
+  dags: "../dags"
+  logs: "../logs"
 
 logging:
-  level: DEBUG # Log level
-  format: json # Structured JSON logging for container aggregation
-  # No log files needed here; logs routed to Airflow's logging system or stdout
+  level: DEBUG
+  format: json
 
 extract:
   required_fields:
@@ -44,13 +41,25 @@ transform:
     - "5. volume"
 
 postgres_loader:
-  # Logging is centralized globally
-  connection_string: "postgresql://cromanillos:werc3871874@db:5432/etl_project" # Add your DB connection string here
+  connection_string: ${DATABASE_URL}
   schema: public
-  table: your_target_table # Replace with your target table name
+  table: your_target_table
+
+s3:
+  bucket: ${S3_BUCKET}
+  region: ${S3_REGION}
+  path_format: logs/{{ ds }}/data.json.gz
+
+redshift:
+  host: ${REDSHIFT_HOST}
+  port: ${REDSHIFT_PORT}
+  db: ${REDSHIFT_DB}
+  schema: ${REDSHIFT_SCHEMA}
+  table: ${REDSHIFT_TABLE}
+  copy_options: "FORMAT AS JSON 'auto'"
 
 airflow:
-  executor: LocalExecutor # Matches your docker-compose .env setting
+  executor: ${AIRFLOW__CORE__EXECUTOR}
   dags_folder: "../dags"
   logs_folder: "../logs"
 
@@ -58,6 +67,4 @@ notifications:
   email_on_failure: true
   email_on_retry: false
   recipients:
-    - "alerts@yourdomain.com"
-    - "data.team@yourdomain.com"
-
+    - ${ALERT_EMAILS}
