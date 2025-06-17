@@ -1,11 +1,10 @@
-# Dockerfile
 # --- Build Stage --- 
 FROM python:3.11-slim AS build
 
 WORKDIR /app
 
 # Install prerequisites
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential curl && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
