@@ -1,3 +1,4 @@
+# et01_rest_to_postgres.py
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
@@ -9,6 +10,7 @@ from src.postgres_loader import load_data
 from src.utils.pipeline import initialize_pipeline
 from src.utils.schema import Base
 from src.utils.db_connection import engine
+from src.utils.default_args import default_args
 
 # === Centralized config & logger initialization ===
 CONFIG, LOGGER = initialize_pipeline(component_name="etl_dag", config_path="/opt/airflow/config/config.yaml")

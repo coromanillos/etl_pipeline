@@ -1,3 +1,4 @@
+# memail_alert_dag.py
 import os
 import yaml
 from pathlib import Path
@@ -8,6 +9,8 @@ from airflow.operators.email import EmailOperator
 from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.trigger_rule import TriggerRule
+from src.utils.default_args import default_args
+
 
 # Load configuration from YAML
 def load_config():
