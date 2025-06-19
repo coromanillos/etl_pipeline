@@ -1,9 +1,7 @@
-import os
 from datetime import timedelta
 from src.utils.slack_alert import slack_failed_task_alert
 from src.utils.pipeline import initialize_pipeline
 
-# Reuse the config so emails still work (fallback or hybrid)
 CONFIG, _ = initialize_pipeline("default_args", "/opt/airflow/config/config.yaml")
 
 NOTIFICATIONS = CONFIG.get("notifications", {})
@@ -19,5 +17,5 @@ default_args = {
     "email_on_retry": EMAIL_ON_RETRY,
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
-    "on_failure_callback": slack_failed_task_alert
+    "on_failure_callback": slack_failed_task_alert,
 }
