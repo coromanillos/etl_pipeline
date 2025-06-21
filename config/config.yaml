@@ -1,3 +1,4 @@
+# config.yaml 
 api:
   endpoint: https://www.alphavantage.co/query
   key: ${ALPHA_VANTAGE_API_KEY}

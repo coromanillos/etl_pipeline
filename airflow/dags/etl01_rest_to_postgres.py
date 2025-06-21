@@ -53,13 +53,10 @@ def load_task(ti, **kwargs):
     load_data(processed_path, CONFIG, LOGGER)
 
 # === DAG Definition ===
-
 DEFAULT_ARGS = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'email': ALERT_EMAILS,
-    'email_on_failure': EMAIL_ON_FAILURE,
-    'email_on_retry': EMAIL_ON_RETRY,
+    'on_failure_callback': slack_failed_task_alert,
     'retries': 1,
 }
 
@@ -74,7 +71,7 @@ with DAG(
     ### ETL Pipeline DAG
     - **Source:** REST API (e.g., Alpha Vantage)
     - **Target:** PostgreSQL
-    - **Monitoring:** Fluent Bit → S3, Airflow Email Alerts
+    - **Monitoring:** Slack Alerts via on_failure_callback
     """,
 ) as dag:
 
@@ -94,3 +91,4 @@ with DAG(
     )
 
     extract >> transform >> load
+
