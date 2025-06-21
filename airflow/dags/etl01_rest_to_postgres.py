@@ -4,9 +4,9 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import os
 
-from src.extract import extract_data
-from src.transform import process_raw_data
-from src.postgres_loader import load_data
+from src.etl_rest_to_postgres.extract import extract_data
+from src.etl_rest_to_postgres.transform import process_raw_data
+from src.etl_rest_to_postgres.postgres_loader import load_data
 from src.utils.pipeline import initialize_pipeline
 from src.utils.schema import Base
 from src.utils.db_connection import engine
