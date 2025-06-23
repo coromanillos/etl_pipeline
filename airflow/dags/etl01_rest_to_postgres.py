@@ -11,6 +11,8 @@ from src.utils.pipeline import initialize_pipeline
 from src.utils.schema import Base
 from src.utils.db_connection import engine
 from src.utils.default_args import default_args
+from src.utils.slack_alert import slack_failed_task_alert
+
 
 # === Centralized config & logger initialization ===
 CONFIG, LOGGER = initialize_pipeline(component_name="etl_dag", config_path="/opt/airflow/config/config.yaml")
