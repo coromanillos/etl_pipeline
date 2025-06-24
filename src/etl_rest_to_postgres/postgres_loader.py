@@ -10,14 +10,17 @@ import json
 from datetime import datetime
 from utils.schema import IntradayData
 from utils.db_connection import get_db_session
+from utils.logging_config import get_logger
 
-def load_data(processed_file_path: str, config: dict, logger) -> int:
+logger = get_logger(__name__)
+
+def load_data(processed_file_path: str, config: dict) -> int:
     try:
         with open(processed_file_path, "r") as f:
             data = json.load(f)
-            logger.info("Processed data file loaded", file=processed_file_path)
+            logger.info(f"Processed data file loaded: {processed_file_path}")
     except Exception as e:
-        logger.error("Failed to read processed file", file=processed_file_path, error=str(e), exc_info=True)
+        logger.error(f"Failed to read processed file {processed_file_path}: {e}", exc_info=True)
         return 0
 
     records = []
@@ -41,11 +44,11 @@ def load_data(processed_file_path: str, config: dict, logger) -> int:
             )
         except Exception as e:
             skipped += 1
-            logger.warning("Skipped row due to parse error", row=row, error=str(e))
+            logger.warning(f"Skipped row due to parse error: {e} | Row: {row}")
             continue
 
     if not records:
-        logger.warning("No valid records to insert.", skipped=skipped)
+        logger.warning(f"No valid records to insert. Skipped: {skipped}")
         return 0
 
     try:
@@ -53,8 +56,8 @@ def load_data(processed_file_path: str, config: dict, logger) -> int:
         with Session() as session:
             session.bulk_save_objects(records)
             session.commit()
-        logger.info("Data loaded into PostgreSQL successfully.", records_inserted=len(records), skipped=skipped)
+        logger.info(f"Data loaded into PostgreSQL successfully. Inserted: {len(records)}, Skipped: {skipped}")
         return len(records)
     except Exception as e:
-        logger.error("Database insertion failed", error=str(e), exc_info=True)
+        logger.error(f"Database insertion failed: {e}", exc_info=True)
         return 0

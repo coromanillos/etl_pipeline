@@ -10,9 +10,7 @@ from src.etl_rest_to_postgres.postgres_loader import load_data
 from src.utils.pipeline import initialize_pipeline
 from src.utils.schema import Base
 from src.utils.db_connection import engine
-from src.utils.default_args import default_args
 from src.utils.slack_alert import slack_failed_task_alert
-
 
 # === Centralized config & logger initialization ===
 CONFIG, LOGGER = initialize_pipeline(component_name="etl_dag", config_path="/opt/airflow/config/config.yaml")
@@ -24,18 +22,12 @@ Base.metadata.create_all(engine)
 RAW_DATA_DIR = CONFIG["directories"]["raw_data"]
 PROCESSED_DATA_DIR = CONFIG["directories"]["processed_data"]
 
-# === Email alert setup (based on config.yaml notifications block) ===
-NOTIFICATIONS = CONFIG.get("notifications", {})
-ALERT_EMAILS = NOTIFICATIONS.get("recipients", [])
-EMAIL_ON_FAILURE = NOTIFICATIONS.get("email_on_failure", True)
-EMAIL_ON_RETRY = NOTIFICATIONS.get("email_on_retry", False)
-
 # === Task Callables ===
 
 def extract_task(ti, **kwargs):
     LOGGER.info("Starting extraction task.")
     os.makedirs(RAW_DATA_DIR, exist_ok=True)
-    raw_file_path = extract_data(CONFIG, LOGGER)
+    raw_file_path = extract_data(CONFIG)  # no LOGGER param
     if not raw_file_path:
         raise ValueError("Extraction failed.")
     ti.xcom_push(key='raw_path', value=raw_file_path)
@@ -44,7 +36,7 @@ def transform_task(ti, **kwargs):
     LOGGER.info("Starting transformation task.")
     raw_path = ti.xcom_pull(key='raw_path', task_ids='extract')
     os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
-    processed_file_path = process_raw_data(raw_path, CONFIG, LOGGER)
+    processed_file_path = process_raw_data(raw_path, CONFIG)  # no LOGGER param
     if not processed_file_path:
         raise ValueError("Transformation failed.")
     ti.xcom_push(key='processed_path', value=processed_file_path)
@@ -52,7 +44,8 @@ def transform_task(ti, **kwargs):
 def load_task(ti, **kwargs):
     LOGGER.info("Starting load task.")
     processed_path = ti.xcom_pull(key='processed_path', task_ids='transform')
-    load_data(processed_path, CONFIG, LOGGER)
+    load_data(processed_path, CONFIG)  # no LOGGER param
+
 
 # === DAG Definition ===
 DEFAULT_ARGS = {
@@ -93,4 +86,3 @@ with DAG(
     )
 
     extract >> transform >> load
-
