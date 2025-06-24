@@ -7,14 +7,16 @@
 
 from utils.file_handler import save_raw_data
 from utils.api_requests import fetch_data
+from utils.logging_config import get_logger
 
-def extract_data(config, logger):
+logger = get_logger(__name__)
+
+def extract_data(config):
     """
     Extracts intraday time series data from the Alpha Vantage API and saves it to disk.
 
     Args:
         config (dict): Loaded config.yaml dictionary.
-        logger (Logger): Initialized structured logger.
 
     Returns:
         str or None: Path to the raw data file if successful, else None.
@@ -22,7 +24,7 @@ def extract_data(config, logger):
     try:
         logger.info("Starting data extraction from Alpha Vantage API...")
         data = fetch_data(config["api"])
-        
+
         if not data:
             logger.error("No data returned by the Alpha Vantage API.")
             return None

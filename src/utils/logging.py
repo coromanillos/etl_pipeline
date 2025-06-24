@@ -3,7 +3,7 @@
 # Author: Christopher Romanillos, Copilot
 # Description: Structured, dynamic logging to STDOUT only
 # Date: 2025-05-18
-# Version: 4.0
+# Version: 4.0 | in-use
 #############################################################
 
 import os
