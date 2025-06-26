@@ -11,12 +11,11 @@ from datetime import datetime
 from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
-
 from utils.file_handler import save_processed_data
 from utils.data_validation import transform_and_validate_data
-from utils.logging_config import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 def load_raw_data(raw_file_path: str) -> Optional[dict]:
     if not os.path.exists(raw_file_path):

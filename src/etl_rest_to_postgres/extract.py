@@ -7,9 +7,9 @@
 
 from utils.file_handler import save_raw_data
 from utils.api_requests import fetch_data
-from utils.logging_config import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 def extract_data(config):
     """

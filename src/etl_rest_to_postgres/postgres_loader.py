@@ -10,9 +10,9 @@ import json
 from datetime import datetime
 from utils.schema import IntradayData
 from utils.db_connection import get_db_session
-from utils.logging_config import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 def load_data(processed_file_path: str, config: dict) -> int:
     try:
