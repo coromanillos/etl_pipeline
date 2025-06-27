@@ -1,3 +1,10 @@
+###################################################
+# Title: slack_alert.py
+# Author: Christopher Romanillos
+# Description: Slack alerts on failure, DAG level.
+# Date: 06/26/25
+###################################################
+
 import os
 import requests
 
