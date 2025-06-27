@@ -2,63 +2,52 @@
 # Title: postgres_extractor.py
 # Author: Christopher Romanillos
 # Description: Extracts all PostgreSQL table names
-# and records using .env and config.yaml
 # Date: 06/23/25 
 ##############################################
 
-import os
+import logging
 import pandas as pd
 import psycopg2
-import yaml
 from psycopg2 import sql
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-# Load YAML config
-def load_config(path: str = "config/config.yaml") -> dict:
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+def get_postgres_connection(database_url: str):
+    logger.info("Establishing PostgreSQL connection.")
+    return psycopg2.connect(database_url)
 
-CONFIG = load_config()
+def get_all_table_names(config: dict, schema: str = None) -> list:
+    schema = schema or config["postgres_loader"].get("schema", "public")
+    database_url = config["postgres_loader"]["connection_string"]
 
-# Get connection string and schema from config
-DATABASE_URL = os.getenv("DATABASE_URL") or CONFIG["postgres_loader"]["connection_string"]
-SCHEMA = CONFIG["postgres_loader"].get("schema", "public")
-
-
-def get_postgres_connection():
-    """
-    Establishes a psycopg2 connection using DATABASE_URL.
-    """
-    return psycopg2.connect(DATABASE_URL)
-
-
-def get_all_table_names(schema: str = SCHEMA) -> list:
-    """
-    Returns all table names in the specified schema.
-    """
     query = """
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = %s AND table_type = 'BASE TABLE';
     """
+    try:
+        with get_postgres_connection(database_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (schema,))
+                results = cur.fetchall()
+                logger.info(f"Fetched {len(results)} tables from schema '{schema}'.")
+                return [row[0] for row in results]
+    except Exception as e:
+        logger.error(f"Failed to retrieve table names: {e}", exc_info=True)
+        return []
 
-    with get_postgres_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, (schema,))
-            results = cur.fetchall()
-            return [row[0] for row in results]
-
-
-def extract_table_data(table_name: str, schema: str = SCHEMA) -> pd.DataFrame:
-    """
-    Extracts all rows from a table and returns a DataFrame.
-    """
-    with get_postgres_connection() as conn:
-        query = sql.SQL("SELECT * FROM {}.{}").format(
-            sql.Identifier(schema),
-            sql.Identifier(table_name)
-        )
-        return pd.read_sql_query(query, conn)
+def extract_table_data(table_name: str, config: dict, schema: str = None) -> pd.DataFrame:
+    schema = schema or config["postgres_loader"].get("schema", "public")
+    database_url = config["postgres_loader"]["connection_string"]
+    try:
+        with get_postgres_connection(database_url) as conn:
+            query = sql.SQL("SELECT * FROM {}.{}").format(
+                sql.Identifier(schema),
+                sql.Identifier(table_name)
+            )
+            logger.info(f"Extracting data from table '{schema}.{table_name}'.")
+            return pd.read_sql_query(query, conn)
+    except Exception as e:
+        logger.error(f"Failed to extract data from {table_name}: {e}", exc_info=True)
+        return pd.DataFrame()
