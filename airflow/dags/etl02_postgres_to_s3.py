@@ -11,9 +11,9 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import logging
 
-from src.etl_postgres_to_s3.postgres_extractor import get_all_table_names, extract_table_data
 from src.etl_postgres_to_s3.parquet_converter import convert_to_parquet
 from src.etl_postgres_to_s3.s3_uploader import upload_file_to_s3, generate_s3_key
+from src.utils.postgres_extractor import get_all_table_names, extract_table_data
 from src.utils.pipeline import initialize_pipeline
 from src.utils.slack_alert import slack_failed_task_alert  
 
