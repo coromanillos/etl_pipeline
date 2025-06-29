@@ -13,10 +13,6 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 class IntradayData(Base):
-    """
-    SQLAlchemy model for intraday time-series data.
-    Defines schema for storing OHLCV data with timestamps.
-    """
     __tablename__ = 'intraday_data'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -28,6 +24,15 @@ class IntradayData(Base):
     volume = Column(BigInteger, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-# To create the table:
-# - Import 'Base' into a setup script.
-# - Use `Base.metadata.create_all(engine)` with a properly configured engine.
+def get_table_column_types():
+    return {
+        "timestamp": DateTime,
+        "open": Float,
+        "high": Float,
+        "low": Float,
+        "close": Float,
+        "volume": BigInteger,
+    }
+
+def get_required_columns():
+    return ["timestamp", "open", "high", "low", "close", "volume"]
