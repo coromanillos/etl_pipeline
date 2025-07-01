@@ -6,7 +6,7 @@ api:
   symbol: IBM
   interval: 5min
 
-validation:
+validation: 
   alpha_vantage_intraday:
     required_keys:
       - endpoint
@@ -49,7 +49,9 @@ postgres_loader:
 s3:
   bucket: ${S3_BUCKET}
   region: ${S3_REGION}
-  path_format: logs/{{ ds }}/data.json.gz
+  path_format: archive/{table}/dt={date}/{filename}
+
+
 
 redshift:
   host: ${REDSHIFT_HOST}

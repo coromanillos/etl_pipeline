@@ -13,11 +13,24 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def generate_s3_key(table_name: str, config: dict, timestamp: str = None) -> str:
-    if not timestamp:
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d")
-    path_format = config["s3"].get("path_format", "archive/{date}/{filename}")
-    filename = f"{table_name}_{timestamp}.parquet"
-    return path_format.replace("{date}", timestamp).replace("{filename}", filename)
+    from datetime import datetime
+
+    # Use a consistent run timestamp if not passed
+    now = datetime.utcnow()
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%Y%m%dT%H%M%SZ")
+
+    path_format = config["s3"].get("path_format", "archive/{table}/dt={date}/{filename}")
+    filename = f"{table_name}_{time_str}.parquet"
+
+    s3_key = (
+        path_format
+        .replace("{table}", table_name)
+        .replace("{date}", date_str)
+        .replace("{filename}", filename)
+    )
+
+    return s3_key
 
 def upload_file_to_s3(local_file_path: str, config: dict, s3_key: str) -> None:
     s3_bucket = config["s3"]["bucket"]

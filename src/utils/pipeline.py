@@ -1,5 +1,5 @@
 #############################################################################
-# Title: Centralized Logging + Config Loader
+# Title: pipeline.py
 # Author: Christopher Romanillos
 # Description: Loads config and logger for a named pipeline component
 # Date: 2025-05-18 | Version: 2.1

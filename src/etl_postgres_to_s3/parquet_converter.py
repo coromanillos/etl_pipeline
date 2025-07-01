@@ -15,14 +15,17 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def generate_parquet_path(table_name: str, config: dict, timestamp: str = None) -> str:
+    from datetime import datetime
+
     processed_data_dir = config["directories"]["processed_data"]
-    if not os.path.exists(processed_data_dir):
-        os.makedirs(processed_data_dir, exist_ok=True)
+    os.makedirs(processed_data_dir, exist_ok=True)
 
     if not timestamp:
         timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+
     filename = f"{table_name}_{timestamp}.parquet"
     return os.path.join(processed_data_dir, filename)
+
 
 def convert_to_parquet(df: pd.DataFrame, table_name: str, config: dict, timestamp: str = None) -> str:
     output_path = generate_parquet_path(table_name, config, timestamp)
