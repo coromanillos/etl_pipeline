@@ -3,11 +3,9 @@
 # Purpose: Performs VACUUM FULL to free up space
 ##############################################
 
-import logging
 from src.utils.postgres_extractor import get_postgres_connection
 
-def vacuum_postgres(config: dict):
-    logger = logging.getLogger(__name__)
+def vacuum_postgres(config: dict, logger):
     database_url = config["postgres_loader"]["connection_string"]
 
     try:

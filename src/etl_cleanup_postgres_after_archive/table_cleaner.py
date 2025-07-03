@@ -3,11 +3,9 @@
 # Purpose: Drops all tables in the target PostgreSQL schema
 ##############################################
 
-import logging
 from src.utils.postgres_extractor import get_postgres_connection
 
-def drop_all_tables(config: dict):
-    logger = logging.getLogger(__name__)
+def drop_all_tables(config: dict, logger):
     schema = config["postgres_loader"].get("schema", "public")
     database_url = config["postgres_loader"]["connection_string"]
 

@@ -10,7 +10,6 @@ import boto3
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 def generate_s3_key(table_name: str, config: dict, timestamp: str = None) -> str:
     from datetime import datetime

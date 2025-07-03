@@ -5,9 +5,7 @@
 # Date: 2025-06-28
 ##############################################
 
-
 from src.utils.pipeline import initialize_pipeline
-
 
 def load_cleanup_config():
     config, logger = initialize_pipeline(
