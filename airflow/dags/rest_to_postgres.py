@@ -46,7 +46,7 @@ DEFAULT_ARGS = {
 }
 
 with DAG(
-    dag_id="etl01_rest_to_postgres",
+    dag_id="rest_to_postgres",
     start_date=datetime(2024, 1, 1),
     schedule_interval="@daily",
     catchup=False,

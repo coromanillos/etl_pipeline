@@ -1,9 +1,9 @@
 # requirements.txt
 
-apache-airflow==3.0.1
+apache-airflow==2.8.2
 apache-airflow-providers-standard
 structlog==24.1.0
-SQLAlchemy==2.0.19
+SQLAlchemy==1.4.49
 python-dotenv==0.21.0
 requests>=2.23.0,<2.27.2
 PyYAML==6.0

@@ -19,7 +19,7 @@ from src.utils.slack_alert import slack_failed_task_alert
 
 # Initialize config once here in DAG
 CONFIG, _ = initialize_pipeline(
-    component_name="etl02_archive_postgres_to_s3",
+    component_name="archive_postgres_to_s3",
     config_path="/opt/airflow/config/config.yaml"
 )
 
