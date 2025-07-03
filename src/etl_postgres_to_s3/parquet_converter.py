@@ -12,7 +12,6 @@ import logging
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 def generate_parquet_path(table_name: str, config: dict, timestamp: str = None) -> str:
     from datetime import datetime

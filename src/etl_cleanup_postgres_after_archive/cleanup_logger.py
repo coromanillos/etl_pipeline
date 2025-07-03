@@ -3,13 +3,10 @@
 # Purpose: Logs the status of the cleanup process to S3 or local logs
 ##############################################
 
-import logging
 from datetime import datetime
 import os
 
-
-def log_cleanup_summary(config: dict, message: str):
-    logger = logging.getLogger(__name__)
+def log_cleanup_summary(config: dict, logger, message: str):
     logs_dir = config["directories"]["logs"]
     os.makedirs(logs_dir, exist_ok=True)
 

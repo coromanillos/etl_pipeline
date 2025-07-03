@@ -1,5 +1,5 @@
 ###################################################
-# Title: etl02_postgres_to_s3.py
+# Title: archive_postgres_to_s3.py
 # Author: Christopher Romanillos
 # Description: Moves refined data in postgres to s3
 # Secondary phase of ETL
