@@ -22,7 +22,7 @@ from src.etl_postgres_to_redshift.data_transformer import transform_for_redshift
 from src.etl_postgres_to_redshift.redshift_loader import load_data_to_redshift
 
 # Initialize config once (inherits ENV and YAML)
-CONFIG, _ = initialize_pipeline(component_name="etl03_postgres_to_redshift", config_path="/opt/airflow/config/config.yaml")
+CONFIG, _ = initialize_pipeline(component_name="postgres_to_redshift", config_path="/opt/airflow/config/config.yaml")
 
 logger = logging.getLogger(__name__)
 
