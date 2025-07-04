@@ -5,7 +5,6 @@
 # Date: 2024-10-27 | Version: 1.9 (refactored for resilience and Airflow XCom compatibility)
 #####################################################################################
 
-from utils.file_handler import save_raw_data
 from utils.api_requests import fetch_data
 import logging
 
@@ -13,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 def extract_data(config):
     """
-    Extracts intraday time series data from the Alpha Vantage API and saves it to disk.
+    Extract data from Alpha Vantage API and return as dict (no file saved).
 
     Args:
-        config (dict): Loaded config.yaml dictionary.
+        config (dict): Config dictionary.
 
     Returns:
-        str or None: Path to the raw data file if successful, else None.
+        dict or None: Extracted data dictionary or None on failure.
     """
     try:
         logger.info("Starting data extraction from Alpha Vantage API...")
@@ -29,13 +28,8 @@ def extract_data(config):
             logger.error("No data returned by the Alpha Vantage API.")
             return None
 
-        raw_data_path = save_raw_data(data, config["directories"]["raw_data"])
-        if not raw_data_path:
-            logger.error("Failed to save raw data to disk.")
-            return None
-
-        logger.info(f"Raw data successfully saved to: {raw_data_path}")
-        return raw_data_path
+        logger.info("Data extraction successful.")
+        return data
 
     except Exception as e:
         logger.exception(f"Exception during data extraction: {e}")

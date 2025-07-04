@@ -6,6 +6,10 @@
 # Use-case: Scripts that run outside of Airflow and Docker.
 # Date: 2025-06-25
 # Version: 4.1
+# OUTDATED
+# Airflow should use "logging.getLogger(__name__)". This setup 
+# is for scripts that are standalone, outside of Airflow and the
+# DAG lifecycle.
 #############################################################
 
 import os

@@ -1,49 +1,63 @@
-version: "3.8"
+vx-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: etl_pipeline_airflow
+  restart: always
+  env_file:
+    - .env
+  environment:
+    AIRFLOW_HOME: "/app"
+    AIRFLOW__CORE__DAGS_FOLDER: "/app/airflow/dags"
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    # AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+    AWS_REGION: us-east-1
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+    # SMTP ALERTS
+    AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
+    AIRFLOW__SMTP__SMTP_STARTTLS: "True"
+    AIRFLOW__SMTP__SMTP_SSL: "False"
+    AIRFLOW__SMTP__SMTP_PORT: 587
+    AIRFLOW__SMTP__SMTP_USER: ${ALERT_EMAILS}
+    AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: ${ALERT_EMAILS}
+
+  volumes:
+    - .:/app
+  depends_on:
+    db:
+      condition: service_healthy
+  networks:
+    - etl_net
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
 
 services:
-  etl_app:
-    container_name: etl_app
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
-    environment:
-      AIRFLOW_HOME: "/app"
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
-
-      # SMTP SETTINGS FOR ALERT EMAILS
-      AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
-      AIRFLOW__SMTP__SMTP_STARTTLS: "True"
-      AIRFLOW__SMTP__SMTP_SSL: "False"
-      AIRFLOW__SMTP__SMTP_PORT: 587
-      AIRFLOW__SMTP__SMTP_USER: ${ALERT_EMAILS}
-      AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
-      AIRFLOW__SMTP__SMTP_MAIL_FROM: ${ALERT_EMAILS}
-
-    depends_on:
-      db:
-        condition: service_healthy
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
-
-    networks:
-      - etl_net
-    volumes:
-      - .:/app
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow_webserver
+    command: "webserver"
+    ports:
+      - "8080:8080"
     labels:
       app: etl_pipeline
       service: airflow_webserver
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "512M"
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow_scheduler
+    command: "scheduler"
+    labels:
+      app: etl_pipeline
+      service: airflow_scheduler
 
   fluentbit:
     container_name: fluentbit
@@ -61,18 +75,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
-
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: "256M"
-
     labels:
       app: etl_pipeline
       service: fluentbit
@@ -96,18 +98,6 @@ services:
       retries: 5
     networks:
       - etl_net
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
-
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "512M"
-
     labels:
       app: etl_pipeline
       service: database

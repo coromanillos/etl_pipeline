@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 def generate_s3_key(table_name: str, config: dict, timestamp: str = None) -> str:
     from datetime import datetime
 
-    # Use a consistent run timestamp if not passed
     now = datetime.utcnow()
     date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%Y%m%dT%H%M%SZ")
@@ -31,13 +30,12 @@ def generate_s3_key(table_name: str, config: dict, timestamp: str = None) -> str
 
     return s3_key
 
-def upload_file_to_s3(local_file_path: str, config: dict, s3_key: str) -> None:
-    s3_bucket = config["s3"]["bucket"]
+def upload_file_to_s3(local_file_path: str, config: dict, s3_key: str, bucket_name: str) -> None:
     s3_region = config["s3"]["region"]
     s3_client = boto3.client("s3", region_name=s3_region)
     try:
-        s3_client.upload_file(local_file_path, s3_bucket, s3_key)
-        logger.info(f"✅ Uploaded {local_file_path} to s3://{s3_bucket}/{s3_key}")
+        s3_client.upload_file(local_file_path, bucket_name, s3_key)
+        logger.info(f"✅ Uploaded {local_file_path} to s3://{bucket_name}/{s3_key}")
     except Exception as e:
         logger.error(f"❌ Upload failed: {e} | File: {local_file_path}", exc_info=True)
         raise

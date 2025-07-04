@@ -7,52 +7,39 @@
 ##############################################
 
 import requests
-from utils.logging import get_logger
+import logging
 
-# Get logger with default base-case logging (utilities.log)
-logger = get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 def fetch_data(api_config):
-    """
-    Fetch data from the API using the provided configuration.
-
-    Args:
-        api_config (dict): API configuration containing endpoint, key, timeout, etc.
-
-    Returns:
-        dict: Parsed JSON response from the API.
-
-    Raises:
-        Exception: If the request fails or is unsuccessful.
-    """
     url = api_config["endpoint"]
     timeout = api_config["timeout"]
     params = {
-        "function": "TIME_SERIES_INTRADAY",  # Assuming 'intraday' for this case
+        "function": "TIME_SERIES_INTRADAY",
         "symbol": api_config["symbol"],
         "interval": api_config["interval"],
         "apikey": api_config["key"]
     }
 
     try:
-        logger.info("Sending request to API", url=url, timeout=timeout, params=params)
+        logger.info(f"Sending request to API: {url}")
         response = requests.get(url, params=params, timeout=timeout)
         response.raise_for_status()
-        logger.info("Request successful", status_code=response.status_code)
+        logger.info(f"Request successful: {response.status_code}")
         return response.json()
 
     except requests.exceptions.Timeout:
-        logger.error("Request timed out", timeout=timeout)
+        logger.error("Request timed out", exc_info=True)
         raise
 
     except requests.exceptions.ConnectionError as e:
-        logger.error("Connection error occurred", error=str(e))
+        logger.error(f"Connection error: {e}", exc_info=True)
         raise
 
     except requests.exceptions.HTTPError as http_err:
-        logger.error("HTTP error occurred", status_code=response.status_code, error=str(http_err))
+        logger.error(f"HTTP error: {http_err}", exc_info=True)
         raise
 
     except requests.exceptions.RequestException as err:
-        logger.error("Unexpected request exception", error=str(err))
+        logger.error(f"Unexpected request error: {err}", exc_info=True)
         raise

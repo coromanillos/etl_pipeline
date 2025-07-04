@@ -1,3 +1,5 @@
+# Default arguments for Slack *dummy messages*
+
 from datetime import timedelta
 from src.utils.slack_alert import slack_failed_task_alert
 from src.utils.pipeline import initialize_pipeline

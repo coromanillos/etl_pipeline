@@ -6,27 +6,33 @@
 # Date: 2025-05-18 | Version: 2.2 (modernized logging, error handling)
 ##############################################
 
-import json
-from datetime import datetime
 from utils.schema import IntradayData
 from utils.db_connection import get_db_session
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
 
-def load_data(processed_file_path: str, config: dict) -> int:
-    try:
-        with open(processed_file_path, "r") as f:
-            data = json.load(f)
-            logger.info(f"Processed data file loaded: {processed_file_path}")
-    except Exception as e:
-        logger.error(f"Failed to read processed file {processed_file_path}: {e}", exc_info=True)
+def load_data(processed_data: list, config: dict) -> int:
+    """
+    Load processed data (list of dicts) into PostgreSQL.
+
+    Args:
+        processed_data (list): List of validated dicts ready for DB insert.
+        config (dict): Configuration dictionary.
+
+    Returns:
+        int: Number of inserted records.
+    """
+    if not processed_data:
+        logger.warning("No processed data provided to load.")
         return 0
 
     records = []
     required = {"timestamp", "open", "high", "low", "close", "volume"}
     skipped = 0
-    for row in data:
+
+    for row in processed_data:
         if not required.issubset(row):
             skipped += 1
             continue
@@ -45,7 +51,6 @@ def load_data(processed_file_path: str, config: dict) -> int:
         except Exception as e:
             skipped += 1
             logger.warning(f"Skipped row due to parse error: {e} | Row: {row}")
-            continue
 
     if not records:
         logger.warning(f"No valid records to insert. Skipped: {skipped}")
