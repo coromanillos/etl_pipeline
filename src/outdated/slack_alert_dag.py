@@ -1,4 +1,4 @@
-# slack_alert_dag.py
+# Simulate a task failure intentionally and trigger slack alerts
 
 import os
 import yaml

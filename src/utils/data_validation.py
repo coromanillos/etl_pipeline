@@ -7,29 +7,20 @@
 ##############################################
 
 from datetime import datetime
+import logging
 
-from utils.logging import get_logger
-
-# Setup logger using the base-case (utilities.log)
-logger = get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 def transform_and_validate_data(item, required_fields):
-    """Transform and validate data, ensuring required fields exist."""
     try:
         timestamp, values = item
-        logger.info("Processing data", timestamp=timestamp)
+        logger.info(f"Processing data: {timestamp}")
 
-        # Check for missing required fields
         missing_fields = [field for field in required_fields if field not in values]
         if missing_fields:
-            logger.warning(
-                "Skipping entry due to missing fields",
-                timestamp=timestamp,
-                missing_fields=missing_fields
-            )
+            logger.warning(f"Skipping due to missing fields at {timestamp}: {missing_fields}")
             return None
 
-        # Transform data
         transformed_data = {
             "timestamp": datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S'),
             "open": float(values["1. open"]),
@@ -39,9 +30,9 @@ def transform_and_validate_data(item, required_fields):
             "volume": int(values["5. volume"]),
         }
 
-        logger.info("Successfully transformed data", timestamp=timestamp)
+        logger.info(f"Successfully transformed data: {timestamp}")
         return transformed_data
 
     except (ValueError, KeyError) as e:
-        logger.error("Error validating data", timestamp=timestamp, error=str(e))
+        logger.error(f"Validation error at {timestamp}: {e}", exc_info=True)
         return None

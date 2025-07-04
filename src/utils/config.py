@@ -10,39 +10,36 @@ import os
 from pathlib import Path
 import yaml
 from dotenv import load_dotenv
+import logging
 
-from utils.logging import get_logger
-
-# Initialize structured logging with base-case fallback
-logger = get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 def load_config(config_path):
-    """Load configuration from a YAML file and initialize logger dynamically."""
     config_path = Path(config_path).resolve()
 
     try:
         with open(config_path, 'r') as file:
             config = yaml.safe_load(file)
-        logger.info("YAML configuration loaded", path=str(config_path))
+        logger.info(f"YAML configuration loaded: {config_path}")
         return config
 
     except FileNotFoundError as e:
-        logger.error("Configuration file not found", path=str(config_path), error=str(e))
+        logger.error(f"Configuration file not found: {config_path}", exc_info=True)
         raise
 
     except yaml.YAMLError as e:
-        logger.error("YAML parsing error", error=str(e))
+        logger.error(f"YAML parsing error: {e}", exc_info=True)
         raise
 
+
 def load_env_variables(key):
-    """Load environment variable from .env file."""
     logger.info("Loading .env file")
     load_dotenv()
 
     value = os.getenv(key)
     if value is None:
-        logger.warning("Environment variable not set", variable=key)
+        logger.warning(f"Environment variable not set: {key}")
     else:
-        logger.info("Environment variable loaded", variable=key)
+        logger.info(f"Environment variable loaded: {key}")
 
     return value

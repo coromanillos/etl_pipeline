@@ -47,8 +47,9 @@ postgres_loader:
   table: your_target_table
 
 s3:
-  bucket: ${S3_BUCKET}
-  region: ${S3_REGION}
+  archive_bucket: your-archive-bucket-name
+  logs_bucket: your-logs-bucket-name
+  region: your-aws-region
   path_format: archive/{table}/dt={date}/{filename}
 
 
