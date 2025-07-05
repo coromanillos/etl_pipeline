@@ -1,9 +1,8 @@
+
 ##################################################
-# Title: data_validator.py
+# File: data_validator.py (Refactored)
+# Description: Validates PostgreSQL data before Redshift load
 # Author: Christopher Romanillos
-# Description: Performs data quality and integrity
-# checks on extracted PostgreSQL data before
-# loading into Amazon Redshift.
 # Date: 06/28/25
 ##################################################
 

@@ -1,29 +1,18 @@
 ##############################################
 # Title: Data Loading to PostgreSQL Script
 # Author: Christopher Romanillos
-# Description: Loads cleaned and transformed
-# data to PostgreSQL.
-# Date: 2025-05-18 | Version: 2.2 (modernized logging, error handling)
+# Description: Loads cleaned and transformed data to PostgreSQL
+# Date: 2025-05-18 | Version: 2.3 (centralized config)
 ##############################################
 
-from utils.schema import IntradayData
-from utils.db_connection import get_db_session
 from datetime import datetime
 import logging
+from src.utils.schema import IntradayData
+from src.utils.db_connection import get_db_session
 
 logger = logging.getLogger(__name__)
 
 def load_data(processed_data: list, config: dict) -> int:
-    """
-    Load processed data (list of dicts) into PostgreSQL.
-
-    Args:
-        processed_data (list): List of validated dicts ready for DB insert.
-        config (dict): Configuration dictionary.
-
-    Returns:
-        int: Number of inserted records.
-    """
     if not processed_data:
         logger.warning("No processed data provided to load.")
         return 0
@@ -61,8 +50,8 @@ def load_data(processed_data: list, config: dict) -> int:
         with Session() as session:
             session.bulk_save_objects(records)
             session.commit()
-        logger.info(f"Data loaded into PostgreSQL successfully. Inserted: {len(records)}, Skipped: {skipped}")
+        logger.info(f"✅ Inserted: {len(records)}, Skipped: {skipped}")
         return len(records)
     except Exception as e:
-        logger.error(f"Database insertion failed: {e}", exc_info=True)
+        logger.error(f"❌ Database insertion failed: {e}", exc_info=True)
         return 0

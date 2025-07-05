@@ -1,7 +1,7 @@
-##############################################
-# File: table_cleaner.py
-# Purpose: Drops all tables in the target PostgreSQL schema
-##############################################
+###############################################
+# File: table_cleaner.py (Refactored)
+# Purpose: Drops all tables in target PostgreSQL schema
+###############################################
 
 from src.utils.postgres_extractor import get_postgres_connection
 

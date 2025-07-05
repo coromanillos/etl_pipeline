@@ -1,39 +1,32 @@
 ##############################################
-# Title: Database Connection Setup
+# Title: PostgreSQL Connection Module
 # Author: Christopher Romanillos
-# Description: Handles the creation of the 
-# database engine and sessions.
-# Date: 3/11/24
-# Version: 1.5
+# Description: Session maker for SQLAlchemy
+# Date: 2025-07-04
+# Version: 2.0 (No .env, Docker-safe)
 ##############################################
 
-import os
 import logging
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from utils.config import get_env_var
 
 logger = logging.getLogger(__name__)
 
-# Load environment variables for local development (ignored if running inside Docker with env)
-load_dotenv()
+DATABASE_URL = get_env_var("DATABASE_URL")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    logger.error("Missing environment variable: DATABASE_URL")
-    raise EnvironmentError("DATABASE_URL is not set in environment variables.")
-
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
-
-logger.info("Database connection pool established")
+try:
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    Session = sessionmaker(bind=engine)
+    logger.info("✅ PostgreSQL connection pool initialized")
+except Exception as e:
+    logger.error("❌ Failed to initialize database engine", exc_info=True)
+    raise
 
 def get_db_session():
-    """Returns a database session for interacting with the database."""
     try:
-        logger.info("Providing a session from the connection pool")
+        logger.debug("📦 Providing new DB session")
         return Session
     except Exception as e:
-        logger.error("Failed to create database session", exc_info=True)
+        logger.error("❌ Failed to create DB session", exc_info=True)
         raise

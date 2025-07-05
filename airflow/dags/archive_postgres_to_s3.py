@@ -10,12 +10,12 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 import logging
-import yaml
 
 from src.etl_postgres_to_s3.parquet_converter import convert_to_parquet
 from src.etl_postgres_to_s3.s3_uploader import upload_file_to_s3, generate_s3_key
 from src.utils.postgres_extractor import get_all_table_names, extract_table_data
 from src.utils.slack_alert import slack_failed_task_alert
+from src.utils.config import load_config
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,6 @@ DEFAULT_ARGS = {
     "retries": 1,
     "on_failure_callback": slack_failed_task_alert,
 }
-
-def load_config():
-    with open("/opt/airflow/config/config.yaml") as f:
-        return yaml.safe_load(f)
 
 with DAG(
     dag_id="archive_postgres_to_s3",

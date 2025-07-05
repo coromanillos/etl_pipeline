@@ -18,7 +18,7 @@ def fetch_data(api_config):
         "function": "TIME_SERIES_INTRADAY",
         "symbol": api_config["symbol"],
         "interval": api_config["interval"],
-        "apikey": api_config["key"]
+        "apikey": api_config["key"],
     }
 
     try:

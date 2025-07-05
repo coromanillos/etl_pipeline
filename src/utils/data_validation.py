@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def transform_and_validate_data(item, required_fields):
     try:
         timestamp, values = item
-        logger.info(f"Processing data: {timestamp}")
+        logger.debug(f"Processing data: {timestamp}")
 
         missing_fields = [field for field in required_fields if field not in values]
         if missing_fields:
@@ -22,7 +22,7 @@ def transform_and_validate_data(item, required_fields):
             return None
 
         transformed_data = {
-            "timestamp": datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S'),
+            "timestamp": datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S"),
             "open": float(values["1. open"]),
             "high": float(values["2. high"]),
             "low": float(values["3. low"]),
@@ -30,7 +30,7 @@ def transform_and_validate_data(item, required_fields):
             "volume": int(values["5. volume"]),
         }
 
-        logger.info(f"Successfully transformed data: {timestamp}")
+        logger.debug(f"Successfully transformed data: {timestamp}")
         return transformed_data
 
     except (ValueError, KeyError) as e:

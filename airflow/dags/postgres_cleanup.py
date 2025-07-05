@@ -10,7 +10,6 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime
-import yaml
 import logging
 
 from src.utils.slack_alert import slack_failed_task_alert
@@ -18,21 +17,18 @@ from src.dags.postgres_cleanup.table_cleaner import drop_all_tables
 from src.dags.postgres_cleanup.vacuum_executor import vacuum_postgres
 from src.dags.postgres_cleanup.cleanup_logger import log_cleanup_summary
 from src.utils.pipeline import initialize_pipeline
-
-def load_cleanup_config():
-    with open("/opt/airflow/config/cleanup_config.yaml") as f:
-        return yaml.safe_load(f)
-
-def get_config_and_logger():
-    config = load_cleanup_config()
-    logger = initialize_pipeline("postgres_cleanup")
-    return config, logger
+from src.utils.config import load_config
 
 DEFAULT_ARGS = {
     "owner": "airflow",
     "retries": 1,
     "on_failure_callback": slack_failed_task_alert,
 }
+
+def get_config_and_logger():
+    config = load_config("/opt/airflow/config/cleanup_config.yaml")
+    logger = initialize_pipeline("postgres_cleanup")
+    return config, logger
 
 with DAG(
     dag_id="postgres_cleanup",

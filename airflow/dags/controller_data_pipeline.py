@@ -6,6 +6,7 @@
 # - Load Postgres to Redshift
 # - Cleanup PostgreSQL only if both succeed
 # Date: 2025-06-28
+# Version: Production-ready
 ###################################################
 
 from airflow import DAG
@@ -16,9 +17,10 @@ from datetime import datetime
 import logging
 
 from src.utils.slack_alert import slack_failed_task_alert
+from src.utils.config import get_env_var  # Optional safety
 
-# Configure logging
 logger = logging.getLogger(__name__)
+logger.info("🚀 Initializing controller_data_pipeline DAG")
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -26,6 +28,9 @@ DEFAULT_ARGS = {
     "retries": 1,
     "on_failure_callback": slack_failed_task_alert,
 }
+
+# Optional: validate Slack URL is present
+get_env_var("SLACK_WEBHOOK_URL", required=True)
 
 with DAG(
     dag_id="controller_data_pipeline",
@@ -40,11 +45,9 @@ with DAG(
     Coordinates three dependent DAGs:
     - ✅ `archive_postgres_to_s3`: Cold storage archival
     - ✅ `postgres_to_redshift`: BI-ready warehousing
-    - ✅ `cleanup_postgres_after_archive`: Only runs if both above succeed
+    - ✅ `postgres_cleanup`: Only runs if both above succeed
     """,
 ) as dag:
-
-    logger.info("Initializing controller_data_pipeline DAG...")
 
     start = EmptyOperator(task_id="start_pipeline")
 

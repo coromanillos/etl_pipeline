@@ -1,8 +1,7 @@
 ##################################################
-# Title: data_transformer.py
+# File: data_transformer.py (Refactored)
+# Description: Transforms PostgreSQL data for Redshift
 # Author: Christopher Romanillos
-# Description: Transforms DataFrame from PostgreSQL
-#   to match Redshift compatibility standards.
 # Date: 06/28/25
 ##################################################
 

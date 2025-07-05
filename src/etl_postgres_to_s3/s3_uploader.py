@@ -1,19 +1,18 @@
 ##############################################
-# File: s3_uploader.py
+# Title: S3 Uploader
 # Author: Christopher Romanillos
 # Description: Uploads Parquet files to S3
-# Date: 06/23/25
+# Date: 2025-06-23 | Version: 1.3 (centralized config)
 ##############################################
 
 import logging
 import boto3
+import os
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 def generate_s3_key(table_name: str, config: dict, timestamp: str = None) -> str:
-    from datetime import datetime
-
     now = datetime.utcnow()
     date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%Y%m%dT%H%M%SZ")
@@ -21,16 +20,14 @@ def generate_s3_key(table_name: str, config: dict, timestamp: str = None) -> str
     path_format = config["s3"].get("path_format", "archive/{table}/dt={date}/{filename}")
     filename = f"{table_name}_{time_str}.parquet"
 
-    s3_key = (
+    return (
         path_format
         .replace("{table}", table_name)
         .replace("{date}", date_str)
         .replace("{filename}", filename)
     )
 
-    return s3_key
-
-def upload_file_to_s3(local_file_path: str, config: dict, s3_key: str, bucket_name: str) -> None:
+def upload_file_to_s3(local_file_path: str, config: dict, s3_key: str, bucket_name: str):
     s3_region = config["s3"]["region"]
     s3_client = boto3.client("s3", region_name=s3_region)
     try:
