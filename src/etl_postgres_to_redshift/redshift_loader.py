@@ -1,7 +1,7 @@
 ##############################################
-# Title: redshift_loader.py
+# File: redshift_loader.py (Refactored)
 # Author: Christopher Romanillos
-# Description: Load data from PostgreSQL to Redshift
+# Description: Loads PostgreSQL data to Redshift
 # Date: 06/23/25
 ##############################################
 

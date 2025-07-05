@@ -1,7 +1,7 @@
-##############################################
-# File: cleanup_logger.py
-# Purpose: Logs the status of the cleanup process to S3 or local logs
-##############################################
+###############################################
+# File: cleanup_logger.py (Refactored)
+# Purpose: Logs cleanup status to local logs or S3
+###############################################
 
 from datetime import datetime
 import os

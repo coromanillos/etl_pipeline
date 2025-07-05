@@ -13,7 +13,7 @@ from psycopg2 import sql
 logger = logging.getLogger(__name__)
 
 def get_postgres_connection(database_url: str):
-    logger.info("📡 Connecting to PostgreSQL.")
+    logger.debug("📡 Connecting to PostgreSQL.")
     return psycopg2.connect(database_url)
 
 def get_all_table_names(config: dict, schema: str = None) -> list:
@@ -42,9 +42,8 @@ def extract_table_data(table_name: str, config: dict, schema: str = None) -> pd.
 
     try:
         with get_postgres_connection(database_url) as conn:
-            query = sql.SQL("SELECT * FROM {}.{}").format(
-                sql.Identifier(schema),
-                sql.Identifier(table_name)
+            query = sql.SQL("SELECT * FROM {}.{};").format(
+                sql.Identifier(schema), sql.Identifier(table_name)
             )
             logger.info(f"📤 Extracting data from '{schema}.{table_name}'.")
             return pd.read_sql_query(query, conn)

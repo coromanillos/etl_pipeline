@@ -11,13 +11,13 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 import logging
-import yaml
 
 from src.etl_postgres_to_redshift.postgres_extractor import extract_table_data
 from src.etl_postgres_to_redshift.data_validator import validate_dataframe
 from src.etl_postgres_to_redshift.data_transformer import transform_for_redshift
 from src.etl_postgres_to_redshift.redshift_loader import load_data_to_redshift
 from src.utils.slack_alert import slack_failed_task_alert
+from src.utils.config import load_config
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,6 @@ DEFAULT_ARGS = {
     "retries": 1,
     "on_failure_callback": slack_failed_task_alert,
 }
-
-def load_config():
-    with open("/opt/airflow/config/config.yaml") as f:
-        return yaml.safe_load(f)
 
 with DAG(
     dag_id="postgres_to_redshift",

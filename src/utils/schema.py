@@ -13,7 +13,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 class IntradayData(Base):
-    __tablename__ = 'intraday_data'
+    __tablename__ = "intraday_data"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=False, unique=True, index=True)

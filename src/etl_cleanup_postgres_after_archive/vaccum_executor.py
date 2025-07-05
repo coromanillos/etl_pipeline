@@ -1,7 +1,7 @@
-##############################################
-# File: vacuum_executor.py
-# Purpose: Performs VACUUM FULL to free up space
-##############################################
+###############################################
+# File: vacuum_executor.py (Refactored)
+# Purpose: Performs VACUUM FULL on PostgreSQL
+###############################################
 
 from src.utils.postgres_extractor import get_postgres_connection
 

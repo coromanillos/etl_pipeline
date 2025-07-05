@@ -8,28 +8,30 @@
 import os
 import requests
 import logging
+from utils.config import get_env_var
 
 logger = logging.getLogger(__name__)
 
 def slack_failed_task_alert(context):
-    webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-    if not webhook_url:
-        logger.error("SLACK_WEBHOOK_URL not set in environment")
-        raise ValueError("SLACK_WEBHOOK_URL not set in environment")
+    webhook_url = get_env_var("SLACK_WEBHOOK_URL")
 
-    task_instance = context.get('task_instance')
-    dag_id = context.get('dag').dag_id
+    task_instance = context.get("task_instance")
+    dag_id = context.get("dag").dag_id
     task_id = task_instance.task_id
-    execution_date = context.get('execution_date')
+    execution_date = context.get("execution_date")
     log_url = task_instance.log_url
 
     message = (
         f"\U0001F6A8 *Airflow Task Failed*\n"
-        f"\u2022 *DAG:* `{dag_id}`\n"
-        f"\u2022 *Task:* `{task_id}`\n"
-        f"\u2022 *Execution Date:* `{execution_date}`\n"
-        f"\u2022 <{log_url}|View Log>"
+        f"• *DAG:* `{dag_id}`\n"
+        f"• *Task:* `{task_id}`\n"
+        f"• *Execution Date:* `{execution_date}`\n"
+        f"• <{log_url}|View Log>"
     )
 
-    response = requests.post(webhook_url, json={"text": message})
-    logger.info("Slack alert sent", extra={"status": response.status_code})
+    try:
+        response = requests.post(webhook_url, json={"text": message})
+        response.raise_for_status()
+        logger.info("✅ Slack alert sent", extra={"status": response.status_code})
+    except requests.exceptions.RequestException as e:
+        logger.error(f"❌ Slack alert failed: {e}", exc_info=True)

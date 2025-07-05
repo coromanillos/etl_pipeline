@@ -4,8 +4,11 @@ x-airflow-common: &airflow-common
     dockerfile: Dockerfile
   image: etl_pipeline_airflow
   restart: always
+
+  # Reference all env vars from here:
   env_file:
     - .env
+
   environment:
     PYTHONPATH: /app
     AIRFLOW_HOME: "/app"
@@ -15,11 +18,11 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 
-    AWS_REGION: us-east-1
+    AWS_REGION: ${S3_REGION}
     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
 
-    # SMTP ALERTS
+    # SMTP Alerts
     AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
     AIRFLOW__SMTP__SMTP_STARTTLS: "True"
     AIRFLOW__SMTP__SMTP_SSL: "False"
@@ -48,17 +51,11 @@ services:
     command: "webserver"
     ports:
       - "8080:8080"
-    labels:
-      app: etl_pipeline
-      service: airflow_webserver
 
   airflow-scheduler:
     <<: *airflow-common
     container_name: airflow_scheduler
     command: "scheduler"
-    labels:
-      app: etl_pipeline
-      service: airflow_scheduler
 
   fluentbit:
     container_name: fluentbit
@@ -76,9 +73,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
-    labels:
-      app: etl_pipeline
-      service: fluentbit
 
   db:
     container_name: postgres_db
@@ -97,11 +91,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - etl_net
-    labels:
-      app: etl_pipeline
-      service: database
 
 volumes:
   pgdata:

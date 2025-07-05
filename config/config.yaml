@@ -42,9 +42,9 @@ transform:
     - "5. volume"
 
 postgres_loader:
-  connection_string: ${DATABASE_URL}
   schema: public
   table: your_target_table
+
 
 s3:
   archive_bucket: your-archive-bucket-name
