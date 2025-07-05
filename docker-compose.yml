@@ -1,4 +1,4 @@
-vx-airflow-common: &airflow-common
+x-airflow-common: &airflow-common
   build:
     context: .
     dockerfile: Dockerfile
@@ -7,11 +7,12 @@ vx-airflow-common: &airflow-common
   env_file:
     - .env
   environment:
+    PYTHONPATH: /app
     AIRFLOW_HOME: "/app"
     AIRFLOW__CORE__DAGS_FOLDER: "/app/airflow/dags"
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "False"
-    # AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
+    AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 
     AWS_REGION: us-east-1

@@ -3,7 +3,6 @@
 from pythonjsonlogger import jsonlogger
 import logging
 
-# Define a reusable JSON formatter class
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
     def __init__(self):
         super().__init__(
@@ -11,7 +10,6 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
             json_ensure_ascii=False
         )
 
-# Logging configuration dictionary
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -27,34 +25,19 @@ LOGGING_CONFIG = {
             "class": "logging.StreamHandler",
             "formatter": "json",
             "stream": "ext://sys.stdout",
-        }
-    },
-
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
+        },
+        "task": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "stream": "ext://sys.stdout",
+        },
     },
 
     "loggers": {
-        "airflow": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "airflow.task": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "airflow.task_runner": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "airflow.jobs.scheduler_job": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    }
+        "airflow": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "airflow.task": {"handlers": ["task"], "level": "INFO", "propagate": False},
+        "airflow.task_runner": {"handlers": ["task"], "level": "INFO", "propagate": False},
+    },
+
+    "root": {"handlers": ["console"], "level": "INFO"},
 }
