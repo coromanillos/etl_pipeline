@@ -5,20 +5,25 @@
 # Date: 2025-05-18 | Version: 2.1
 #############################################################################
 
-from utils.logging import get_logger, load_config
+import logging
+import os
 
-def initialize_pipeline(component_name: str, config_path: str = "/opt/airflow/config/config.yaml"):
+def initialize_pipeline(component_name: str):
     """
-    Loads configuration and sets up a structured logger for the given component.
+    Initializes logging for a pipeline component, respecting Airflow context.
 
     Args:
-        component_name (str): Logical name of the component (e.g. 'extract', 'transform', 'etl_dag').
-        config_path (str): Path to config.yaml, defaulting to Airflow container location.
+        component_name (str): Logical name of the component.
 
     Returns:
-        tuple: (dict: config, Logger: structured logger)
+        Logger: appropriate logger instance.
     """
-    config = load_config(config_path)
-    logger = get_logger(module_name=component_name, config_path=config_path)
+    if "AIRFLOW_CTX_DAG_ID" in os.environ:
+        logger = logging.getLogger(component_name)
+    else:
+        from utils.logging import get_logger
+        logger = get_logger(module_name=component_name, force_setup=True)
+
     logger.info(f"[{component_name}] pipeline initialized.")
-    return config, logger
+    return logger
+

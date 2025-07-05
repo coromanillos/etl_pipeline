@@ -10,15 +10,23 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime
-import logging
 import yaml
+import logging
 
+from src.utils.slack_alert import slack_failed_task_alert
 from src.dags.postgres_cleanup.table_cleaner import drop_all_tables
 from src.dags.postgres_cleanup.vacuum_executor import vacuum_postgres
 from src.dags.postgres_cleanup.cleanup_logger import log_cleanup_summary
-from src.utils.slack_alert import slack_failed_task_alert
+from src.utils.pipeline import initialize_pipeline
 
-logger = logging.getLogger(__name__)
+def load_cleanup_config():
+    with open("/opt/airflow/config/cleanup_config.yaml") as f:
+        return yaml.safe_load(f)
+
+def get_config_and_logger():
+    config = load_cleanup_config()
+    logger = initialize_pipeline("postgres_cleanup")
+    return config, logger
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -26,53 +34,27 @@ DEFAULT_ARGS = {
     "on_failure_callback": slack_failed_task_alert,
 }
 
-def load_cleanup_config():
-    with open("/opt/airflow/config/cleanup_config.yaml") as f:
-        return yaml.safe_load(f)
-
 with DAG(
     dag_id="postgres_cleanup",
     start_date=datetime(2024, 1, 1),
-    schedule_interval=None,  # Triggered manually or by controller DAG
+    schedule_interval=None,
     catchup=False,
     default_args=DEFAULT_ARGS,
     tags=["postgres", "cleanup", "archive"],
-    doc_md="""
-    ### PostgreSQL Cleanup DAG
-    - Drops all tables from PostgreSQL
-    - Runs `VACUUM FULL` to reclaim space
-    - Logs cleanup completion
-    - Assumes `archive_postgres_to_s3` DAG has completed successfully
-    """,
 ) as dag:
-
-    def cleanup_tasks():
-        config = load_cleanup_config()
-        logger.info("🧹 postgres_cleanup DAG initialized...")
-
-        # drop_all_tables expects config and logger
-        drop_all_tables(config=config, logger=logger)
-        vacuum_postgres(config=config, logger=logger)
-        log_cleanup_summary(
-            config=config,
-            logger=logger,
-            message="✅ PostgreSQL cleanup completed successfully."
-        )
-
-    # Or keep original separate tasks if you want fine-grained retry/task visibility:
 
     with TaskGroup("cleanup_postgres") as cleanup_group:
 
         def task_drop_tables(**kwargs):
-            config = load_cleanup_config()
+            config, logger = get_config_and_logger()
             drop_all_tables(config=config, logger=logger)
 
         def task_vacuum_db(**kwargs):
-            config = load_cleanup_config()
+            config, logger = get_config_and_logger()
             vacuum_postgres(config=config, logger=logger)
 
         def task_log_cleanup(**kwargs):
-            config = load_cleanup_config()
+            config, logger = get_config_and_logger()
             log_cleanup_summary(
                 config=config,
                 logger=logger,
