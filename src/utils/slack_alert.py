@@ -12,7 +12,7 @@ from utils.config import get_env_var
 
 logger = logging.getLogger(__name__)
 
-def slack_failed_task_alert(context):
+def slack_failed_task_alert(context, request_fn=requests.post):
     webhook_url = get_env_var("SLACK_WEBHOOK_URL")
 
     task_instance = context.get("task_instance")
@@ -30,7 +30,7 @@ def slack_failed_task_alert(context):
     )
 
     try:
-        response = requests.post(webhook_url, json={"text": message})
+        response = request_fn(webhook_url, json={"text": message})
         response.raise_for_status()
         logger.info("✅ Slack alert sent", extra={"status": response.status_code})
     except requests.exceptions.RequestException as e:

@@ -1,0 +1,7 @@
+# config/test_cleanup_config.yaml
+postgres_loader:
+  schema: test_schema
+  connection_string: postgresql://test_user:test_password@localhost:5432/test_etl_db
+
+directories:
+  logs: /tmp/test_data/logs

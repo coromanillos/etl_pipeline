@@ -10,10 +10,12 @@ from src.utils.api_requests import fetch_data
 
 logger = logging.getLogger(__name__)
 
-def extract_data(config):
+def extract_data(config, fetch_fn=None):
+    fetch_fn = fetch_fn or fetch_data
+
     try:
         logger.info("🔍 Extracting from Alpha Vantage API...")
-        data = fetch_data(config["api"])
+        data = fetch_fn(config["api"])
         if not data:
             logger.error("No data returned by API.")
             return None

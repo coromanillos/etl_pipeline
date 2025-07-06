@@ -1,12 +1,7 @@
 ###################################################
 # Title: controller_data_pipeline.py
-# Author: Christopher Romanillos
-# Description: Orchestrates full data flow:
-# - Archive Postgres to S3
-# - Load Postgres to Redshift
-# - Cleanup PostgreSQL only if both succeed
-# Date: 2025-06-28
-# Version: Production-ready
+# Description: Orchestrates all DAGs
+# Date: 2025-07-06 | Version: 2.1 (testable, refactored)
 ###################################################
 
 from airflow import DAG
@@ -17,7 +12,7 @@ from datetime import datetime
 import logging
 
 from src.utils.slack_alert import slack_failed_task_alert
-from src.utils.config import get_env_var  # Optional safety
+from src.utils.config import get_env_var
 
 logger = logging.getLogger(__name__)
 logger.info("🚀 Initializing controller_data_pipeline DAG")
@@ -29,57 +24,54 @@ DEFAULT_ARGS = {
     "on_failure_callback": slack_failed_task_alert,
 }
 
-# Optional: validate Slack URL is present
 get_env_var("SLACK_WEBHOOK_URL", required=True)
 
-with DAG(
-    dag_id="controller_data_pipeline",
-    description="Master DAG that coordinates archival, redshift loading, and cleanup.",
-    start_date=datetime(2024, 1, 1),
-    schedule_interval="@daily",
-    catchup=False,
-    default_args=DEFAULT_ARGS,
-    tags=["controller", "orchestration"],
-    doc_md="""
-    ### Controller DAG
-    Coordinates three dependent DAGs:
-    - ✅ `archive_postgres_to_s3`: Cold storage archival
-    - ✅ `postgres_to_redshift`: BI-ready warehousing
-    - ✅ `postgres_cleanup`: Only runs if both above succeed
-    """,
-) as dag:
+def create_controller_data_pipeline_dag():
+    with DAG(
+        dag_id="controller_data_pipeline",
+        description="Master DAG that coordinates archival, redshift loading, and cleanup.",
+        start_date=datetime(2024, 1, 1),
+        schedule_interval="@daily",
+        catchup=False,
+        default_args=DEFAULT_ARGS,
+        tags=["controller", "orchestration"],
+    ) as dag:
 
-    start = EmptyOperator(task_id="start_pipeline")
+        start = EmptyOperator(task_id="start_pipeline")
 
-    trigger_archive = TriggerDagRunOperator(
-        task_id="trigger_archive_postgres_to_s3",
-        trigger_dag_id="archive_postgres_to_s3",
-        wait_for_completion=True,
-        reset_dag_run=True,
-        trigger_rule="all_success",
-    )
+        trigger_archive = TriggerDagRunOperator(
+            task_id="trigger_archive_postgres_to_s3",
+            trigger_dag_id="archive_postgres_to_s3",
+            wait_for_completion=True,
+            reset_dag_run=True,
+            trigger_rule="all_success",
+        )
 
-    trigger_redshift = TriggerDagRunOperator(
-        task_id="trigger_postgres_to_redshift",
-        trigger_dag_id="postgres_to_redshift",
-        wait_for_completion=True,
-        reset_dag_run=True,
-        trigger_rule="all_success",
-    )
+        trigger_redshift = TriggerDagRunOperator(
+            task_id="trigger_postgres_to_redshift",
+            trigger_dag_id="postgres_to_redshift",
+            wait_for_completion=True,
+            reset_dag_run=True,
+            trigger_rule="all_success",
+        )
 
-    join = EmptyOperator(
-        task_id="wait_for_both_etl_dags",
-        trigger_rule=TriggerRule.ALL_SUCCESS,
-    )
+        join = EmptyOperator(
+            task_id="wait_for_both_etl_dags",
+            trigger_rule=TriggerRule.ALL_SUCCESS,
+        )
 
-    trigger_cleanup = TriggerDagRunOperator(
-        task_id="trigger_postgres_cleanup",
-        trigger_dag_id="postgres_cleanup",
-        wait_for_completion=False,
-        reset_dag_run=True,
-        trigger_rule="all_success",
-    )
+        trigger_cleanup = TriggerDagRunOperator(
+            task_id="trigger_postgres_cleanup",
+            trigger_dag_id="postgres_cleanup",
+            wait_for_completion=False,
+            reset_dag_run=True,
+            trigger_rule="all_success",
+        )
 
-    end = EmptyOperator(task_id="pipeline_complete")
+        end = EmptyOperator(task_id="pipeline_complete")
 
-    start >> [trigger_archive, trigger_redshift] >> join >> trigger_cleanup >> end
+        start >> [trigger_archive, trigger_redshift] >> join >> trigger_cleanup >> end
+
+        return dag
+
+dag = create_controller_data_pipeline_dag()

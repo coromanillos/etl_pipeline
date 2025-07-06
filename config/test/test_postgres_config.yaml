@@ -1,0 +1,9 @@
+# config/test_postgres_config.yaml
+postgres_loader:
+  user: test_user
+  password: test_password
+  host: localhost
+  port: 5432
+  db: test_etl_db
+  schema: test_schema
+  connection_string: postgresql://test_user:test_password@localhost:5432/test_etl_db

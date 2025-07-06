@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def transform_and_validate_data(item, required_fields):
+def transform_and_validate_data(item, required_fields, datetime_parser=datetime.strptime):
     try:
         timestamp, values = item
         logger.debug(f"Processing data: {timestamp}")
@@ -22,7 +22,7 @@ def transform_and_validate_data(item, required_fields):
             return None
 
         transformed_data = {
-            "timestamp": datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S"),
+            "timestamp": datetime_parser(timestamp, "%Y-%m-%d %H:%M:%S"),
             "open": float(values["1. open"]),
             "high": float(values["2. high"]),
             "low": float(values["3. low"]),

@@ -1,0 +1,8 @@
+# config/test_redshift_config.yaml
+redshift:
+  host: dummy-redshift.local
+  port: 5439
+  db: test_redshift
+  schema: test_schema
+  table: test_staging_data
+  connection_string: postgresql://test_user:test_password@dummy-redshift.local:5439/test_redshift

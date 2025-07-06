@@ -16,3 +16,4 @@ def vacuum_postgres(config: dict, logger):
                 logger.info("✅ VACUUM FULL executed successfully.")
     except Exception as e:
         logger.error(f"❌ VACUUM failed: {e}", exc_info=True)
+        raise

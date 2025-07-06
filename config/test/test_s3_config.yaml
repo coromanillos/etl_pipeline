@@ -1,0 +1,5 @@
+# config/test_s3_config.yaml
+s3:
+  archive_bucket: dummy-bucket-for-testing
+  region: us-east-2
+  path_format: archive/test/{table}/dt={date}/{filename}
