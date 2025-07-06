@@ -12,7 +12,7 @@ from src.utils.db_connection import get_db_session
 
 logger = logging.getLogger(__name__)
 
-def load_data(processed_data: list, config: dict) -> int:
+def load_data(processed_data: list, config: dict, session_factory=None) -> int:
     if not processed_data:
         logger.warning("No processed data provided to load.")
         return 0
@@ -45,9 +45,10 @@ def load_data(processed_data: list, config: dict) -> int:
         logger.warning(f"No valid records to insert. Skipped: {skipped}")
         return 0
 
+    session_factory = session_factory or get_db_session()
+
     try:
-        Session = get_db_session()
-        with Session() as session:
+        with session_factory() as session:
             session.bulk_save_objects(records)
             session.commit()
         logger.info(f"✅ Inserted: {len(records)}, Skipped: {skipped}")

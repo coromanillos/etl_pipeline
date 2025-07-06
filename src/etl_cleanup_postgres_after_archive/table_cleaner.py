@@ -27,3 +27,4 @@ def drop_all_tables(config: dict, logger):
                 logger.info(f"✅ Dropped all tables in schema '{schema}'.")
     except Exception as e:
         logger.error(f"❌ Failed to drop tables: {e}", exc_info=True)
+        raise

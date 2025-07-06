@@ -9,11 +9,13 @@ import logging
 import os
 from utils.logging import get_logger
 
-def initialize_pipeline(component_name: str):
+def initialize_pipeline(component_name: str, logger_fn=None):
+    logger_fn = logger_fn or get_logger
+
     if "AIRFLOW_CTX_DAG_ID" in os.environ:
         logger = logging.getLogger(component_name)
     else:
-        logger = get_logger(module_name=component_name, force_setup=True)
+        logger = logger_fn(module_name=component_name, force_setup=True)
 
     logger.info(f"[{component_name}] pipeline initialized.")
     return logger

@@ -27,7 +27,7 @@ def transform_series_data(series: dict, required_fields: list):
 
     return processed_data, failed_items
 
-def process_raw_data(raw_data: dict, config: dict):
+def process_raw_data(raw_data: dict, config: dict, required_fields=None):
     try:
         if not raw_data:
             logger.error("No raw data provided to transform.")
@@ -38,7 +38,7 @@ def process_raw_data(raw_data: dict, config: dict):
             logger.error("Missing 'Time Series (5min)' in raw data.")
             return None, None
 
-        required_fields = config["transform"]["required_fields"]
+        required_fields = required_fields or config["transform"]["required_fields"]
         processed_data, failed_items = transform_series_data(series, required_fields)
 
         if not processed_data:

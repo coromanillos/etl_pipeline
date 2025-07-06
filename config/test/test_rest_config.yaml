@@ -1,0 +1,20 @@
+# config/test_rest_config.yaml
+api:
+  base_url: https://dummy-api.local
+  endpoint: /alpha-vantage/test-endpoint
+  api_key: test_api_key
+  retries: 2
+
+transform:
+  required_fields:
+    - timestamp
+    - open
+    - high
+    - low
+    - close
+    - volume
+  compression: none
+
+directories:
+  processed_data: /tmp/test_data/processed
+  logs: /tmp/test_data/logs
