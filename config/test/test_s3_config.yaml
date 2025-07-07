@@ -1,3 +1,4 @@
+# s3 test config
 s3:
   archive_bucket: test-archive-bucket # cold storage data
   log_bucket: test-logs-bucket  # for logs

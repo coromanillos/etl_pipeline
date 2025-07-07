@@ -14,7 +14,7 @@ services:
     container_name: localstack
     ports:
       - "4566:4566"  # Main localstack endpoint
-      - "4571:4571"
+      - "4571:4571"  # endpoint for logs bucket*
     environment:
       - SERVICES=s3
       - DEFAULT_REGION=us-east-1
@@ -24,3 +24,21 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - etl_net
+      
+  redshift_sim:
+    image: postgres:16
+    container_name: redshift_sim
+    environment:
+      POSTGRES_USER: redshift_user
+      POSTGRES_PASSWORD: redshift_pass
+      POSTGRES_DB: redshift_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - redshift_data:/var/lib/postgresql/data
+
+volumes:
+  redshift_data:
+
+  
+

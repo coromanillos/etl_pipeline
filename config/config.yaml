@@ -53,7 +53,6 @@ s3:
   path_format: archive/{table}/dt={date}/{filename}
 
 
-
 redshift:
   host: ${REDSHIFT_HOST}
   port: ${REDSHIFT_PORT}
