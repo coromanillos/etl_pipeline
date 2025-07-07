@@ -1,10 +1,26 @@
 services:
   airflow:
     environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
       ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH: /opt/airflow/config/test/test_s3_config.yaml
-      POSTGRES_TO_REDSHIFT_CONFIG_PATH: /opt/airflow/config/test/test_redshift_config.yaml
-      REST_TO_POSTGRES_CONFIG_PATH: /opt/airflow/config/test/test_rest_config.yaml
-      POSTGRES_CLEANUP_CONFIG_PATH: /opt/airflow/config/test/test_cleanup_config.yaml
-      POSTGRES_CONFIG_PATH: /opt/airflow/config/test/test_postgres_config.yaml
+      # ... other config paths
     volumes:
       - ./config/test:/opt/airflow/config/test
+
+  localstack:
+    image: localstack/localstack:3
+    container_name: localstack
+    ports:
+      - "4566:4566"  # Main localstack endpoint
+      - "4571:4571"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - etl_net
