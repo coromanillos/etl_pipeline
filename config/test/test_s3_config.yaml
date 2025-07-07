@@ -1,5 +1,7 @@
-# config/test_s3_config.yaml
 s3:
-  archive_bucket: dummy-bucket-for-testing
-  region: us-east-2
+  archive_bucket: test-archive-bucket # cold storage data
+  log_bucket: test-logs-bucket  # for logs
+  region: us-east-1
+  endpoint_url: http://localstack:4566
   path_format: archive/test/{table}/dt={date}/{filename}
+  use_localstack: true
