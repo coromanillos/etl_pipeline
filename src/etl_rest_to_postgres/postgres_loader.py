@@ -2,19 +2,19 @@
 # Title: Data Loading to PostgreSQL Script
 # Author: Christopher Romanillos
 # Description: Loads cleaned and transformed data to PostgreSQL
-# Date: 2025-05-18 | Version: 2.3 (centralized config)
+# Date: 2025-07-06 | Version: 2.4 (uses refactored db_session)
 ##############################################
 
 from datetime import datetime
 import logging
 from src.utils.schema import IntradayData
-from src.utils.db_connection import get_db_session
+from src.utils.db_session import get_db_session
 
 logger = logging.getLogger(__name__)
 
 def load_data(processed_data: list, config: dict, session_factory=None) -> int:
     if not processed_data:
-        logger.warning("No processed data provided to load.")
+        logger.warning("⚠️ No processed data provided to load.")
         return 0
 
     records = []
@@ -39,13 +39,14 @@ def load_data(processed_data: list, config: dict, session_factory=None) -> int:
             )
         except Exception as e:
             skipped += 1
-            logger.warning(f"Skipped row due to parse error: {e} | Row: {row}")
+            logger.warning(f"⚠️ Skipped row due to parse error: {e} | Row: {row}")
 
     if not records:
-        logger.warning(f"No valid records to insert. Skipped: {skipped}")
+        logger.warning(f"⚠️ No valid records to insert. Skipped: {skipped}")
         return 0
 
-    session_factory = session_factory or get_db_session()
+    # Inject session factory if not provided (production or testing)
+    session_factory = session_factory or get_db_session(config)
 
     try:
         with session_factory() as session:
