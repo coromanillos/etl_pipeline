@@ -1,5 +1,5 @@
 ###############################################
-# File: cleanup_logger.py (Refactored)
+# File: cleanup_logger.py
 # Purpose: Logs cleanup status to local logs or S3
 ###############################################
 

@@ -1,0 +1,25 @@
+[project]
+name = "etl-pipeline"
+version = "0.1.0"
+description = "Your ETL project"
+authors = [
+    { name = "Christopher Romanillos" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "sqlalchemy<2.0",
+    "requests"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["find:"]

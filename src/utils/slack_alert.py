@@ -8,7 +8,7 @@
 import os
 import requests
 import logging
-from utils.config import get_env_var
+from src.utils.config import get_env_var  
 
 logger = logging.getLogger(__name__)
 

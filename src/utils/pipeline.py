@@ -7,7 +7,6 @@
 
 import logging
 import os
-from utils.logging import get_logger
 
 def initialize_pipeline(component_name: str, logger_fn=None):
     logger_fn = logger_fn or get_logger
