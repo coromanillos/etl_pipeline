@@ -17,9 +17,10 @@ def test_load_config_file_not_found():
         load_config("/nonexistent/file.yaml")
 
 def test_load_config_yaml_error():
-    with patch("builtins.open", mock_open(read_data=":bad_yaml")):
+    with patch("builtins.open", mock_open(read_data="this: [unbalanced")):
         with pytest.raises(yaml.YAMLError):
-            load_config("/fake/bad.yaml")
+            load_config("/fake/path.yaml")
+
 
 def test_get_env_var_success():
     result = get_env_var("DUMMY_VAR", getter=lambda k: "value" if k == "DUMMY_VAR" else None)
