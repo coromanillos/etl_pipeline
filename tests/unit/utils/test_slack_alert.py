@@ -22,7 +22,9 @@ def test_slack_failed_task_alert_success(mock_logger, mock_get_env_var):
 
     mock_post.assert_called_once()
     mock_response.raise_for_status.assert_called_once()
-    mock_logger.info.assert_called_once_with("✅ Slack alert sent", extra={"status": 200})
+    mock_logger.info.assert_called_once_with(
+        "✅ Slack alert sent successfully", extra={"status": 200}
+    )
 
 @patch("src.utils.slack_alert.get_env_var", return_value="https://fake-webhook.url")
 @patch("src.utils.slack_alert.logger")

@@ -2,7 +2,7 @@
 import pytest
 import pandas as pd
 from src.etl_postgres_to_redshift.data_validator import validate_dataframe
-
+from unittest.mock import patch
 
 @pytest.fixture
 def config():

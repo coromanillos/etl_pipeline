@@ -7,7 +7,7 @@
 
 import logging
 import pandas as pd
-from schema import get_table_column_types
+from src.utils.schema import get_table_column_types
 
 logger = logging.getLogger(__name__)
 

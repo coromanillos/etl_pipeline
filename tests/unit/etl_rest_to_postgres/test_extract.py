@@ -1,7 +1,7 @@
 # tests/unit/dags/test_rest_to_postgres/test_extractor.py
 import pytest
 from unittest.mock import MagicMock
-from src.etl_rest_to_postgres.extractor import extract_data
+from src.etl_rest_to_postgres.extract import extract_data
 
 def test_extract_data_success():
     mock_fetch = MagicMock(return_value={"Time Series (5min)": {}})

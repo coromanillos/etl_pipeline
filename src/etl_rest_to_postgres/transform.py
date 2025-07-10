@@ -15,11 +15,11 @@ def transform_series_data(series: dict, required_fields: list):
     failed_items = []
 
     def safe_transform(item):
-        try:
-            return transform_and_validate_data(item[1], required_fields)
-        except Exception as e:
-            failed_items.append(item)
-            return None
+        result = transform_and_validate_data(item, required_fields)
+        if result is None:
+            failed_items.append(item)  # ⬅ explicitly track failure
+        return result
+
 
     with ThreadPoolExecutor() as executor:
         results = executor.map(safe_transform, series.items())

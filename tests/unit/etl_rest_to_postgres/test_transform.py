@@ -1,6 +1,6 @@
 # File: tests/unit/test_rest_to_postgres/test_transformer.py
 import pytest
-from src.etl_rest_to_postgres.transformer import process_raw_data
+from src.etl_rest_to_postgres.transform import process_raw_data
 
 @pytest.fixture
 def config():
@@ -34,5 +34,5 @@ def test_process_raw_data_missing_series(config):
 def test_process_raw_data_missing_fields(config):
     raw_data = {"Time Series (5min)": {"2024-10-10 10:00:00": {"1. open": "100.0"}}}
     processed, failed = process_raw_data(raw_data, config)
-    assert processed == []
+    assert processed is None  # changed
     assert len(failed) == 1

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from src.utils.table_cleaner import drop_all_tables
+from src.etl_cleanup_postgres_after_archive.table_cleaner import drop_all_tables
 
-@patch("src.utils.table_cleaner.get_postgres_connection")
+@patch("src.etl_cleanup_postgres_after_archive.table_cleaner.get_postgres_connection")
 def test_drop_all_tables_success(mock_get_conn):
     # Mocks
     mock_conn = MagicMock()
@@ -27,7 +27,7 @@ def test_drop_all_tables_success(mock_get_conn):
     mock_conn.commit.assert_called_once()
     logger.info.assert_called_with("✅ Dropped all tables in schema 'test_schema'.")
 
-@patch("src.utils.table_cleaner.get_postgres_connection")
+@patch("src.etl_cleanup_postgres_after_archive.table_cleaner.get_postgres_connection")
 def test_drop_all_tables_failure(mock_get_conn):
     # Mocks that simulate failure
     mock_conn = MagicMock()

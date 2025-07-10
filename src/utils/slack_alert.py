@@ -5,33 +5,45 @@
 # Date: 06/26/25
 ###################################################
 
-import os
-import requests
 import logging
-from src.utils.config import get_env_var  
+import requests
+from typing import Any, Callable
+from src.utils.config import get_env_var
 
 logger = logging.getLogger(__name__)
 
-def slack_failed_task_alert(context, request_fn=requests.post):
+
+def slack_failed_task_alert(context: dict, request_fn: Callable = requests.post) -> None:
+    """
+    Sends a Slack alert when a DAG task fails.
+
+    Args:
+        context (dict): Airflow task context dictionary.
+        request_fn (Callable): HTTP request function, defaults to requests.post.
+    """
     webhook_url = get_env_var("SLACK_WEBHOOK_URL")
-
-    task_instance = context.get("task_instance")
-    dag_id = context.get("dag").dag_id
-    task_id = task_instance.task_id
-    execution_date = context.get("execution_date")
-    log_url = task_instance.log_url
-
-    message = (
-        f"\U0001F6A8 *Airflow Task Failed*\n"
-        f"• *DAG:* `{dag_id}`\n"
-        f"• *Task:* `{task_id}`\n"
-        f"• *Execution Date:* `{execution_date}`\n"
-        f"• <{log_url}|View Log>"
-    )
+    if not webhook_url:
+        logger.warning("⚠️ SLACK_WEBHOOK_URL is not set. Slack alert will not be sent.")
+        return
 
     try:
+        task_instance = context.get("task_instance")
+        dag_id = context.get("dag").dag_id
+        task_id = task_instance.task_id
+        execution_date = context.get("execution_date")
+        log_url = task_instance.log_url
+
+        message = (
+            f"🚨 *Airflow Task Failed*\n"
+            f"• *DAG:* `{dag_id}`\n"
+            f"• *Task:* `{task_id}`\n"
+            f"• *Execution Date:* `{execution_date}`\n"
+            f"• <{log_url}|View Log>"
+        )
+
         response = request_fn(webhook_url, json={"text": message})
         response.raise_for_status()
-        logger.info("✅ Slack alert sent", extra={"status": response.status_code})
-    except requests.exceptions.RequestException as e:
-        logger.error(f"❌ Slack alert failed: {e}", exc_info=True)
+        logger.info("✅ Slack alert sent successfully", extra={"status": response.status_code})
+
+    except Exception as e:
+        logger.error("❌ Slack alert failed", exc_info=True)

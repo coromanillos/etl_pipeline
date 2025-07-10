@@ -26,8 +26,9 @@ def test_get_all_table_names_failure(mock_config):
     result = get_all_table_names(mock_config, conn_factory=mock_factory)
     assert result == []
 
+@patch("psycopg2.sql.SQL.as_string", return_value="SELECT * FROM public.table_name;")
 @patch("pandas.read_sql_query")
-def test_extract_table_data_success(mock_read_sql, mock_config):
+def test_extract_table_data_success(mock_read_sql, mock_as_string, mock_config):
     mock_read_sql.return_value = pd.DataFrame({"a": [1], "b": [2]})
 
     mock_conn = MagicMock()
@@ -39,7 +40,14 @@ def test_extract_table_data_success(mock_read_sql, mock_config):
 
 @patch("pandas.read_sql_query", side_effect=Exception("read failed"))
 def test_extract_table_data_failure(mock_read_sql, mock_config):
-    mock_factory = MagicMock(return_value=MagicMock(__enter__=lambda x: MagicMock(), __exit__=MagicMock()))
+    mock_conn = MagicMock()
+    mock_conn.__enter__.return_value = mock_conn
+    mock_conn.__exit__.return_value = False
+
+    mock_factory = MagicMock(return_value=mock_conn)
+
     result = extract_table_data("bad_table", mock_config, conn_factory=mock_factory)
+
     assert isinstance(result, pd.DataFrame)
     assert result.empty
+
