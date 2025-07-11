@@ -27,7 +27,7 @@ def transform_for_redshift(df: pd.DataFrame, config: dict) -> pd.DataFrame:
 
         try:
             if expected_type.__name__ == "DateTime":
-                df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
+                df[col] = pd.to_datetime(df[col], format="%Y-%m-%d %H:%M:%S", errors="coerce", utc=True)
                 logger.debug(f"🕒 '{col}' cast to datetime (UTC).")
             elif expected_type.__name__ == "Float":
                 df[col] = pd.to_numeric(df[col], errors="coerce")
