@@ -1,4 +1,5 @@
-# test_rest_to_postgres.py
+# tests/integration/test_rest_to_postgres.py
+
 import pytest
 import logging
 from src.etl_rest_to_postgres.extract import extract_data
@@ -9,7 +10,10 @@ from src.utils.db_client import get_postgres_connection
 logger = logging.getLogger(__name__)
 
 @pytest.mark.integration
-def test_rest_to_postgres_pipeline(test_config):
+def test_rest_to_postgres_pipeline(test_config, clear_table):
+    # Clean target table before starting test
+    clear_table(test_config, "intraday_data")
+
     # Step 1: Extract raw data from API
     raw_data = extract_data(test_config)
     assert raw_data is not None, "No data returned from API."
