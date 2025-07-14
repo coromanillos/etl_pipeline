@@ -16,7 +16,7 @@ def test_postgres_to_s3_pipeline(test_config, clear_table, delete_s3_key):
     table_name = test_config["postgres_loader"]["table"]
     bucket_name = test_config["s3"]["archive_bucket"]
 
-    # STEP 0: Optional clear table before extracting
+    # STEP 0: Clear table before extracting
     clear_table(test_config, table_name)
 
     # STEP 1: Extract data from PostgreSQL
