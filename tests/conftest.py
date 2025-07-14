@@ -5,16 +5,18 @@ import yaml
 import logging
 from src.utils.s3_client import get_s3_client
 
+
 @pytest.fixture(scope="session")
 def test_config():
     """Loads the test configuration from YAML once per session."""
     with open("config/test/test_rest_config.yaml") as f:
         return yaml.safe_load(f)
 
+
 @pytest.fixture
 def clear_table():
     """
-    Reusable fixture to clear a PostgreSQL table before a test.
+    Fixture to truncate a PostgreSQL table before tests.
     Usage: clear_table(config, 'table_name')
     """
     def _clear(config, table_name):
@@ -26,10 +28,11 @@ def clear_table():
             conn.commit()
     return _clear
 
+
 @pytest.fixture
 def drop_all_tables():
     """
-    Reusable fixture to drop all tables in the PostgreSQL schema before a test.
+    Fixture to drop all tables within a PostgreSQL schema.
     Usage: drop_all_tables(config, logger)
     """
     def _drop(config, logger):
@@ -56,13 +59,13 @@ def drop_all_tables():
         except Exception as e:
             logger.error(f"❌ Failed to drop tables: {e}", exc_info=True)
             raise
-
     return _drop
+
 
 @pytest.fixture
 def vacuum_postgres():
     """
-    Reusable fixture to run VACUUM FULL on PostgreSQL before/after a test.
+    Fixture to run VACUUM FULL on PostgreSQL.
     Usage: vacuum_postgres(config, logger)
     """
     def _vacuum(config, logger):
@@ -78,13 +81,13 @@ def vacuum_postgres():
         except Exception as e:
             logger.error(f"❌ VACUUM failed: {e}", exc_info=True)
             raise
-
     return _vacuum
+
 
 @pytest.fixture
 def clear_redshift_table():
     """
-    Reusable fixture to drop a Redshift table before a test.
+    Fixture to drop a Redshift table before tests.
     Usage: clear_redshift_table(config, 'table_name')
     """
     def _clear(config, table_name):
@@ -97,11 +100,12 @@ def clear_redshift_table():
             conn.commit()
     return _clear
 
+
 @pytest.fixture
 def delete_s3_key():
     """
-    Reusable fixture to delete a file from S3 after a test.
-    Usage: delete_s3_key(config, s3_key)
+    Fixture to delete an S3 object after tests.
+    Usage: delete_s3_key(config, 's3_key')
     """
     def _delete(config, key):
         bucket = config["s3"]["archive_bucket"]
@@ -111,3 +115,15 @@ def delete_s3_key():
         except Exception:
             logging.warning(f"⚠️ Could not delete S3 key {key} from bucket {bucket}")
     return _delete
+
+
+# ------------------------------------------
+# Add global pytest markers here
+# ------------------------------------------
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "integration: mark a test as an integration test"
+    )
+    config.addinivalue_line(
+        "markers", "end_to_end: mark a test as a full end-to-end pipeline test"
+    )

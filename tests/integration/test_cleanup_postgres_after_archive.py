@@ -1,4 +1,4 @@
-# tests/integration/test_postgres_cleanup.py
+# tests/integration/test_postgres_after_cleanup.py
 
 import os
 import pytest
