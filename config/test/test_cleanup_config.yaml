@@ -1,7 +1,22 @@
-# config/test_cleanup_config.yaml
+# config/test/test_cleanup_config.yaml
+
+s3:
+  archive_bucket: test-archive-bucket
+  log_bucket: test-logs-bucket
+  region: us-east-1
+  endpoint_url: http://localstack:4566
+  path_format: archive/test/{table}/dt={date}/{filename}
+  use_localstack: true
+
 postgres_loader:
+  user: test_user
+  password: test_password
+  host: postgres  # <-- Use Docker service name, NOT localhost
+  port: 5432
+  db: test_etl_db
   schema: test_schema
-  connection_string: postgresql://test_user:test_password@localhost:5432/test_etl_db
+  table: intraday_data
+  connection_string: postgresql://test_user:test_password@postgres:5432/test_etl_db
 
 directories:
   logs: /tmp/test_data/logs

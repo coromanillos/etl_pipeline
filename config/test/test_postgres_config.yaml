@@ -1,4 +1,5 @@
-# config/test_postgres_config.yaml
+# config/test/test_postgres_config.yaml
+
 postgres_loader:
   user: ${POSTGRES_USER}
   password: ${POSTGRES_PASSWORD}
@@ -6,3 +7,5 @@ postgres_loader:
   port: ${POSTGRES_PORT}
   db: ${POSTGRES_DB}
   schema: public
+  table: intraday_data
+  connection_string: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}

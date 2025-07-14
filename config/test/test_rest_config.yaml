@@ -1,9 +1,20 @@
-# config/test_rest_config.yaml
+# config/test/test_rest_config.yaml
+
 api:
-  base_url: https://www.alphavantage.co
-  endpoint: /query
-  api_key: ${ALPHA_VANTAGE_API_KEY}
+  endpoint: https://www.alphavantage.co/query
+  key: ${ALPHA_VANTAGE_API_KEY}
   retries: 2
+  timeout: 30
+  symbol: IBM
+  interval: 5min
+
+s3:
+  archive_bucket: test-archive-bucket
+  log_bucket: test-logs-bucket
+  region: us-east-1
+  endpoint_url: http://localstack:4566
+  path_format: archive/test/{table}/dt={date}/{filename}
+  use_localstack: true
 
 transform:
   required_fields:
@@ -18,3 +29,23 @@ transform:
 directories:
   processed_data: /tmp/test_data/processed
   logs: /tmp/test_data/logs
+
+postgres_loader:
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_PASSWORD}
+  host: ${POSTGRES_HOST}
+  port: ${POSTGRES_PORT}
+  db: ${POSTGRES_DB}
+  schema: public
+  table: intraday_data
+  connection_string: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+
+redshift:
+  host: redshift_sim
+  port: 5432
+  db: redshift_db
+  user: redshift_user
+  password: redshift_pass
+  schema: public
+  table: test_table
+  connection_string: postgresql://redshift_user:redshift_pass@redshift_sim:5432/redshift_db
