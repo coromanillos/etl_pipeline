@@ -1,0 +1,44 @@
+services:
+  test_runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: integration_tests
+    command: [
+      "sh", "-c",
+      "until nc -z db 5432 && nc -z redshift_sim 5432 && nc -z localstack 4566; do echo '⏳ Waiting for dependencies...'; sleep 2; done; pytest -m integration tests/integration"
+    ]
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+      REDSHIFT_HOST: redshift_sim
+      REDSHIFT_PORT: 5432
+      REDSHIFT_USER: redshift_user
+      REDSHIFT_PASSWORD: redshift_pass
+      REDSHIFT_DB: redshift_db
+
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      LOCALSTACK_ENDPOINT: http://localstack:4566
+
+    depends_on:
+      - db
+      - redshift_sim
+      - localstack
+    networks:
+      - etl_net
+
+networks:
+  etl_net:
+    external: false

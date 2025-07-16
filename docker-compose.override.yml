@@ -1,11 +1,19 @@
 services:
-  airflow:
+  airflow-webserver:
     environment:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       AWS_REGION: us-east-1
       ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH: /opt/airflow/config/test/test_s3_config.yaml
-      # ... other config paths
+    volumes:
+      - ./config/test:/opt/airflow/config/test
+
+  airflow-scheduler:
+    environment:
+      AWS_ACCESS_KEY_ID: dummy_access_key
+      AWS_SECRET_ACCESS_KEY: dummy_secret_key
+      AWS_REGION: us-east-1
+      ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH: /opt/airflow/config/test/test_s3_config.yaml
     volumes:
       - ./config/test:/opt/airflow/config/test
 
@@ -13,18 +21,18 @@ services:
     image: localstack/localstack:3
     container_name: localstack
     ports:
-      - "4566:4566"  # Main localstack endpoint
-      - "4571:4571"  # endpoint for logs bucket*
+      - "4566:4566"
+      - "4571:4571"
     environment:
-      - SERVICES=s3
-      - DEFAULT_REGION=us-east-1
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
+      SERVICES: s3
+      DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - etl_net
-      
+
   redshift_sim:
     image: postgres:16
     container_name: redshift_sim
@@ -36,9 +44,5 @@ services:
       - "5433:5432"
     volumes:
       - redshift_data:/var/lib/postgresql/data
-
-volumes:
-  redshift_data:
-
-  
-
+    networks:
+      - etl_net
