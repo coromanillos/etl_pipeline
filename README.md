@@ -120,3 +120,16 @@ Asdf test savings bank employer has tasked you with designing a data pipeline th
 
 - **[Christopher Romanillos]** - Data Engineer
 - **Savings Bank IT Team**
+
+
+## Running Integration Tests in Docker
+
+Make sure your `.env` file is properly configured.
+
+### Step 1: Build and run services + integration tests
+
+```bash
+
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.test.yml build test_runner
+
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test_runner

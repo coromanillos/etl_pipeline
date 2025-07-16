@@ -4,11 +4,8 @@ x-airflow-common: &airflow-common
     dockerfile: Dockerfile
   image: etl_pipeline_airflow
   restart: always
-
-  # Reference all env vars from here:
   env_file:
     - .env
-
   environment:
     PYTHONPATH: /app
     AIRFLOW_HOME: "/app"
@@ -17,22 +14,18 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: "False"
     AIRFLOW__CORE__LOGGING_CONFIG_CLASS: config.airflow_local_settings.LOGGING_CONFIG
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-
     AWS_REGION: ${S3_REGION}
     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-
-    # SMTP Alerts
     AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
     AIRFLOW__SMTP__SMTP_STARTTLS: "True"
     AIRFLOW__SMTP__SMTP_SSL: "False"
     AIRFLOW__SMTP__SMTP_PORT: 587
     AIRFLOW__SMTP__SMTP_USER: ${ALERT_EMAILS}
-    AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
+    #AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
     AIRFLOW__SMTP__SMTP_MAIL_FROM: ${ALERT_EMAILS}
-
   volumes:
-    - .:/app
+    - .:/app:cached  # Cached for better performance on Mac/Windows
   depends_on:
     db:
       condition: service_healthy
@@ -51,11 +44,25 @@ services:
     command: "webserver"
     ports:
       - "8080:8080"
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH: /opt/airflow/config/test/test_s3_config.yaml
+    volumes:
+      - ./config/test:/opt/airflow/config/test
 
   airflow-scheduler:
     <<: *airflow-common
     container_name: airflow_scheduler
     command: "scheduler"
+    environment:
+      AWS_ACCESS_KEY_ID: dummy_access_key
+      AWS_SECRET_ACCESS_KEY: dummy_secret_key
+      AWS_REGION: us-east-1
+      ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH: /opt/airflow/config/test/test_s3_config.yaml
+    volumes:
+      - ./config/test:/opt/airflow/config/test
 
   fluentbit:
     container_name: fluentbit
@@ -65,6 +72,7 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - ./fluentbit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - ./fluentbit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./fluentbit_storage:/var/log/fluent-bit-storage
     networks:
       - etl_net
     read_only: true
@@ -79,7 +87,7 @@ services:
     image: postgres:16
     restart: always
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -91,9 +99,91 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - etl_net
+
+  redshift_sim:
+    container_name: redshift_sim
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: redshift_user
+      POSTGRES_PASSWORD: redshift_pass
+      POSTGRES_DB: redshift_db
+    volumes:
+      - redshift_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redshift_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - etl_net
+
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:3
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - etl_net
+
+  test_runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: integration_tests
+    command:
+      - sh
+      - -c
+      - |
+        until nc -z db 5432 && nc -z redshift_sim 5432 && nc -z localstack 4566; do
+          echo '⏳ Waiting for dependencies...';
+          sleep 2;
+        done;
+        pytest -m integration tests/integration
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      REDSHIFT_HOST: redshift_sim
+      REDSHIFT_PORT: 5432
+      REDSHIFT_USER: redshift_user
+      REDSHIFT_PASSWORD: redshift_pass
+      REDSHIFT_DB: redshift_db
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      LOCALSTACK_ENDPOINT: http://localstack:4566
+    depends_on:
+      - db
+      - redshift_sim
+      - localstack
+    networks:
+      - etl_net
 
 volumes:
   pgdata:
+  redshift_data:
+  fluentbit_storage:
 
 networks:
   etl_net:
+    external: false

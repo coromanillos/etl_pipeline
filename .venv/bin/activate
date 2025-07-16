@@ -67,5 +67,3 @@ fi
 if [ -n "${BASH:-}" -o -n "${ZSH_VERSION:-}" ] ; then
     hash -r 2> /dev/null
 fi
-
-export PYTHONPATH=$(pwd)
