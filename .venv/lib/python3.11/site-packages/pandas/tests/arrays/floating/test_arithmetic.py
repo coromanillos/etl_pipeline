@@ -123,6 +123,7 @@ def test_arith_zero_dim_ndarray(other):
 
 
 def test_error_invalid_values(data, all_arithmetic_operators):
+
     op = all_arithmetic_operators
     s = pd.Series(data)
     ops = getattr(s, op)
@@ -140,10 +141,6 @@ def test_error_invalid_values(data, all_arithmetic_operators):
             "ufunc '.*' not supported for the input types, and the inputs could not",
             "ufunc '.*' did not contain a loop with signature matching types",
             "Concatenation operation is not implemented for NumPy arrays",
-            "has no kernel",
-            "not implemented",
-            "not supported for dtype",
-            "Can only string multiply by an integer",
         ]
     )
     with pytest.raises(TypeError, match=msg):
@@ -165,15 +162,9 @@ def test_error_invalid_values(data, all_arithmetic_operators):
             "not all arguments converted during string formatting",
             "can't multiply sequence by non-int of type 'float'",
             "ufunc 'subtract' cannot use operands with types dtype",
-            (
-                "ufunc 'add' cannot use operands with types "
-                rf"dtype\('{tm.ENDIAN}M8\[ns\]'\)"
-            ),
+            r"ufunc 'add' cannot use operands with types dtype\('<M8\[ns\]'\)",
             r"ufunc 'add' cannot use operands with types dtype\('float\d{2}'\)",
             "cannot subtract DatetimeArray from ndarray",
-            "has no kernel",
-            "not implemented",
-            "not supported for dtype",
         ]
     )
     with pytest.raises(TypeError, match=msg):
@@ -185,6 +176,7 @@ def test_error_invalid_values(data, all_arithmetic_operators):
 
 
 def test_cross_type_arithmetic():
+
     df = pd.DataFrame(
         {
             "A": pd.array([1, 2, np.nan], dtype="Float64"),

@@ -1,4 +1,4 @@
-# conftest
+# conftest.py
 import os
 import yaml
 import pytest
@@ -9,6 +9,7 @@ from src.utils.redshift_client import get_redshift_connection
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
 
 # -----------------------------
 # Helper Function to Expand Env Vars
@@ -53,16 +54,45 @@ def test_redshift_config():
 # PostgreSQL Fixtures
 # -----------------------------
 
+@pytest.fixture(scope="session", autouse=True)
+def ensure_test_postgres_schema(test_postgres_config):
+    """
+    Ensure the 'intraday_data' table exists before tests run in 'etl' schema.
+    """
+    connection_string = test_postgres_config["postgres_loader"]["connection_string"]
+    schema = test_postgres_config["postgres_loader"]["schema"]
+
+    create_schema_query = f"CREATE SCHEMA IF NOT EXISTS {schema};"
+
+    create_table_query = f"""
+    CREATE TABLE IF NOT EXISTS {schema}.intraday_data (
+        id BIGSERIAL PRIMARY KEY,
+        timestamp TIMESTAMP NOT NULL UNIQUE,
+        open DOUBLE PRECISION NOT NULL,
+        high DOUBLE PRECISION NOT NULL,
+        low DOUBLE PRECISION NOT NULL,
+        close DOUBLE PRECISION NOT NULL,
+        volume BIGINT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    """
+
+    with get_postgres_connection({"postgres_loader": {"connection_string": connection_string}}) as conn:
+        with conn.cursor() as cur:
+            cur.execute(create_schema_query)
+            cur.execute(create_table_query)
+        conn.commit()
+
 @pytest.fixture
 def clear_postgres_table():
     def _clear(config, table_name):
         connection_string = config["postgres_loader"]["connection_string"]
+        schema = config["postgres_loader"]["schema"]
         with get_postgres_connection({"postgres_loader": {"connection_string": connection_string}}) as conn:
             with conn.cursor() as cur:
-                cur.execute(f"DELETE FROM {table_name};")
+                cur.execute(f"DELETE FROM {schema}.{table_name};")
             conn.commit()
     return _clear
-
 
 @pytest.fixture
 def drop_all_postgres_tables():

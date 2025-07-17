@@ -11,13 +11,16 @@ from datetime import datetime
 import os
 import logging
 
-from src.utils.slack_alert import slack_failed_task_alert
-from src.dags.postgres_cleanup.table_cleaner import drop_all_tables
-from src.dags.postgres_cleanup.vacuum_executor import vacuum_postgres
-from src.dags.postgres_cleanup.cleanup_logger import log_cleanup_summary
-from src.utils.cleanup_config_loader import load_cleanup_config
+# Adjust imports here based on your folder structure.
+# If your utils are in root/airflow/src/utils and root/airflow/src/dags/postgres_cleanup,
+# you might want to add root/airflow/src to PYTHONPATH or refactor imports accordingly.
 
-# Dependency-injectable logger
+from src.utils.slack_alert import slack_failed_task_alert
+from dags.postgres_cleanup.table_cleaner import drop_all_tables
+from dags.postgres_cleanup.vacuum_executor import vacuum_postgres
+from dags.postgres_cleanup.cleanup_logger import log_cleanup_summary
+from utils.cleanup_config_loader import load_cleanup_config
+
 logger = logging.getLogger(__name__)
 logger.info("🚀 Initializing postgres_cleanup DAG")
 
@@ -27,7 +30,6 @@ DEFAULT_ARGS = {
     "on_failure_callback": slack_failed_task_alert,
 }
 
-# Environment-aware config loader
 CONFIG_PATH = os.getenv(
     "POSTGRES_CLEANUP_CONFIG_PATH",
     "/opt/airflow/config/cleanup_config.yaml"

@@ -1,48 +1,157 @@
+# docker-compose.override.yml - Development environment overrides
+# This file automatically applies when running `docker compose up`
+
 services:
+  # Airflow Webserver - Development overrides
   airflow-webserver:
     environment:
+      # Development AWS credentials for LocalStack
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
-      AWS_REGION: us-east-1
+      
+      # Development-specific configuration paths
       ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH: /opt/airflow/config/test/test_s3_config.yaml
+      
+      # Development mode settings
+      AIRFLOW__WEBSERVER__RELOAD_ON_PLUGIN_CHANGE: "true"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      AIRFLOW__WEBSERVER__RBAC: "false"  # Simplified for development
+      
+      # Debug settings
+      AIRFLOW__LOGGING__LOGGING_LEVEL: DEBUG
+      AIRFLOW__CORE__UNIT_TEST_MODE: "false"
+      
     volumes:
-      - ./config/test:/opt/airflow/config/test
+      # Mount test configuration with read-only access
+      - ./config/test:/opt/airflow/config/test:ro
+      
+      # Development convenience volumes (cached for better performance)
+      # - ./airflow/dags:/app/airflow/dags:cached
+      - ./airflow/plugins:/app/airflow/plugins:cached
+      
+    # Faster startup for development
+    healthcheck:
+      start_period: 30s
+      interval: 15s
 
+  # Airflow Scheduler - Development overrides  
   airflow-scheduler:
     environment:
+      # Development AWS credentials
       AWS_ACCESS_KEY_ID: dummy_access_key
       AWS_SECRET_ACCESS_KEY: dummy_secret_key
-      AWS_REGION: us-east-1
+      
+      # Development-specific configuration paths
       ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH: /opt/airflow/config/test/test_s3_config.yaml
+      
+      # Development scheduler settings (faster for development)
+      AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: 30
+      AIRFLOW__SCHEDULER__CATCHUP_BY_DEFAULT: "false"
+      AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+      AIRFLOW__SCHEDULER__PARSING_PROCESSES: 1  # Reduced for development
+      
+      # Debug settings
+      AIRFLOW__LOGGING__LOGGING_LEVEL: DEBUG
+      
     volumes:
-      - ./config/test:/opt/airflow/config/test
+      # Mount test configuration with read-only access
+      - ./config/test:/opt/airflow/config/test:ro
+      
+      # Development convenience volumes
+      - ./airflow/dags:/app/airflow/dags:cached
+      - ./airflow/plugins:/app/airflow/plugins:cached
+      
+    # Faster startup for development
+    healthcheck:
+      start_period: 30s
+      interval: 15s
 
+  # LocalStack - Development AWS simulation
   localstack:
-    image: localstack/localstack:3
-    container_name: localstack
-    ports:
-      - "4566:4566"
-      - "4571:4571"
     environment:
-      SERVICES: s3
-      DEFAULT_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - etl_net
+      # Development-specific settings
+      DEBUG: ${LOCALSTACK_DEBUG:-1}
+      DISABLE_CORS_CHECKS: 1
+      SKIP_INFRA_DOWNLOADS: 1
+      
+      # Extended services for development
+      SERVICES: s3,secretsmanager,ssm,logs,cloudwatch
+      
+      # Development convenience
+      LAMBDA_EXECUTOR: local
+      LOCALSTACK_HOSTNAME: localstack
+      
+    # Faster startup for development
+    healthcheck:
+      start_period: 15s
+      interval: 15s
 
+  # Redshift Simulator - Development overrides
   redshift_sim:
-    image: postgres:16
-    container_name: redshift_sim
     environment:
-      POSTGRES_USER: redshift_user
-      POSTGRES_PASSWORD: redshift_pass
-      POSTGRES_DB: redshift_db
-    ports:
-      - "5433:5432"
+      # Development-specific PostgreSQL settings
+      POSTGRES_MAX_CONNECTIONS: 50  # Reduced for development
+      
+      # Development logging
+      POSTGRES_LOG_STATEMENT: all
+      POSTGRES_LOG_MIN_DURATION_STATEMENT: 0
+      
     volumes:
-      - redshift_data:/var/lib/postgresql/data
+      # Development SQL scripts
+      - ./sql/redshift:/app/sql:ro
+      
+    # Faster startup for development
+    healthcheck:
+      start_period: 15s
+      interval: 5s
+
+  # Development database - Enhanced for development
+  db:
+    environment:
+      # Development-specific PostgreSQL settings
+      POSTGRES_MAX_CONNECTIONS: 50  # Reduced for development
+      
+      # Development logging (optional, can be noisy)
+      # POSTGRES_LOG_STATEMENT: all
+      # POSTGRES_LOG_MIN_DURATION_STATEMENT: 1000
+      
+    volumes:
+      # Add development initialization scripts
+      - ./db/dev-init:/docker-entrypoint-initdb.d:ro
+      
+    # Faster startup for development
+    healthcheck:
+      start_period: 15s
+      interval: 5s
+
+  # Development-specific: Add a database admin tool
+  pgadmin:
+    image: dpage/pgadmin4:${PGADMIN_VERSION:-latest}
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
     networks:
       - etl_net
+    depends_on:
+      - db
+      - redshift_sim
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+# Additional volumes for development
+volumes:
+  pgadmin_data:
+    driver: local

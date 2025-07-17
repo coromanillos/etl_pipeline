@@ -92,6 +92,7 @@ def test_op_int8(left_array, right_array, opname):
 
 def test_error_invalid_values(data, all_arithmetic_operators):
     # invalid ops
+
     op = all_arithmetic_operators
     s = pd.Series(data)
     ops = getattr(s, op)
@@ -101,8 +102,7 @@ def test_error_invalid_values(data, all_arithmetic_operators):
         "did not contain a loop with signature matching types|"
         "BooleanArray cannot perform the operation|"
         "not supported for the input types, and the inputs could not be safely coerced "
-        "to any supported types according to the casting rule ''safe''|"
-        "not supported for dtype"
+        "to any supported types according to the casting rule ''safe''"
     )
     with pytest.raises(TypeError, match=msg):
         ops("foo")
@@ -110,8 +110,6 @@ def test_error_invalid_values(data, all_arithmetic_operators):
         [
             r"unsupported operand type\(s\) for",
             "Concatenation operation is not implemented for NumPy arrays",
-            "has no kernel",
-            "not supported for dtype",
         ]
     )
     with pytest.raises(TypeError, match=msg):
@@ -125,9 +123,6 @@ def test_error_invalid_values(data, all_arithmetic_operators):
                 r"unsupported operand type\(s\) for",
                 "can only concatenate str",
                 "not all arguments converted during string formatting",
-                "has no kernel",
-                "not implemented",
-                "not supported for dtype",
             ]
         )
         with pytest.raises(TypeError, match=msg):

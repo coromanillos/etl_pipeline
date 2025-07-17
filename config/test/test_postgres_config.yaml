@@ -6,7 +6,7 @@ postgres_loader:
   host: postgres_db
   port: 5432
   db: etl_project
-  schema: public
+  schema: etl
   table: intraday_data
   connection_string: postgresql://cromanillos:werc3871874@postgres_db:5432/etl_project
 

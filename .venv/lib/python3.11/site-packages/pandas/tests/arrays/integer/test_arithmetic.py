@@ -5,8 +5,8 @@ import pytest
 
 import pandas as pd
 import pandas._testing as tm
-from pandas.core import ops
 from pandas.core.arrays import FloatingArray
+import pandas.core.ops as ops
 
 # Basic test for the arithmetic array ops
 # -----------------------------------------------------------------------------
@@ -173,14 +173,27 @@ def test_numpy_zero_dim_ndarray(other):
 
 
 def test_error_invalid_values(data, all_arithmetic_operators):
+
     op = all_arithmetic_operators
     s = pd.Series(data)
     ops = getattr(s, op)
 
     # invalid scalars
-    with tm.external_error_raised(TypeError):
+    msg = "|".join(
+        [
+            r"can only perform ops with numeric values",
+            r"IntegerArray cannot perform the operation mod",
+            r"unsupported operand type",
+            r"can only concatenate str \(not \"int\"\) to str",
+            "not all arguments converted during string",
+            "ufunc '.*' not supported for the input types, and the inputs could not",
+            "ufunc '.*' did not contain a loop with signature matching types",
+            "Addition/subtraction of integers and integer-arrays with Timestamp",
+        ]
+    )
+    with pytest.raises(TypeError, match=msg):
         ops("foo")
-    with tm.external_error_raised(TypeError):
+    with pytest.raises(TypeError, match=msg):
         ops(pd.Timestamp("20180101"))
 
     # invalid array-likes
@@ -192,16 +205,24 @@ def test_error_invalid_values(data, all_arithmetic_operators):
     ]:  # (data[~data.isna()] >= 0).all():
         res = ops(str_ser)
         expected = pd.Series(["foo" * x for x in data], index=s.index)
-        expected = expected.fillna(np.nan)
-        # TODO: doing this fillna to keep tests passing as we make
-        #  assert_almost_equal stricter, but the expected with pd.NA seems
-        #  more-correct than np.nan here.
         tm.assert_series_equal(res, expected)
     else:
-        with tm.external_error_raised(TypeError):
+        with pytest.raises(TypeError, match=msg):
             ops(str_ser)
 
-    with tm.external_error_raised(TypeError):
+    msg = "|".join(
+        [
+            "can only perform ops with numeric values",
+            "cannot perform .* with this index type: DatetimeArray",
+            "Addition/subtraction of integers and integer-arrays "
+            "with DatetimeArray is no longer supported. *",
+            "unsupported operand type",
+            r"can only concatenate str \(not \"int\"\) to str",
+            "not all arguments converted during string",
+            "cannot subtract DatetimeArray from ndarray",
+        ]
+    )
+    with pytest.raises(TypeError, match=msg):
         ops(pd.Series(pd.date_range("20180101", periods=len(s))))
 
 
@@ -241,6 +262,7 @@ def test_arithmetic_conversion(all_arithmetic_operators, other):
 
 
 def test_cross_type_arithmetic():
+
     df = pd.DataFrame(
         {
             "A": pd.Series([1, 2, np.nan], dtype="Int64"),

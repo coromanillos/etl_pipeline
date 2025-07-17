@@ -1,44 +1,142 @@
+# docker-compose.test.yml - Test environment configuration
+# Usage: docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.test.yml up
+
 services:
+  # Test runner service
   test_runner:
     build:
       context: .
       dockerfile: Dockerfile.test
     container_name: integration_tests
-    command: [
-      "sh", "-c",
-      "until nc -z db 5432 && nc -z redshift_sim 5432 && nc -z localstack 4566; do echo '⏳ Waiting for dependencies...'; sleep 2; done; pytest -m integration tests/integration"
-    ]
-    volumes:
-      - .:/app
-    working_dir: /app
-    env_file:
-      - .env
     environment:
+      # Test environment variables
       PYTHONPATH: /app
-      POSTGRES_HOST: db
+      PYTHONUNBUFFERED: 1
+      
+      # Test database connections - Use container names, not service names
+      POSTGRES_HOST: postgres_db  # ✅ Use container_name from main compose
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-
-      REDSHIFT_HOST: redshift_sim
+      
+      # Test Redshift connection
+      REDSHIFT_HOST: redshift_sim  # ✅ Use container_name from main compose
       REDSHIFT_PORT: 5432
-      REDSHIFT_USER: redshift_user
-      REDSHIFT_PASSWORD: redshift_pass
-      REDSHIFT_DB: redshift_db
-
+      REDSHIFT_USER: ${REDSHIFT_USER:-redshift_user}
+      REDSHIFT_PASSWORD: ${REDSHIFT_PASSWORD:-redshift_pass}
+      REDSHIFT_DB: ${REDSHIFT_DB:-redshift_db}
+      
+      # Test LocalStack connection
+      LOCALSTACK_HOST: localstack  # ✅ Use container_name from main compose
+      LOCALSTACK_PORT: 4566
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       AWS_REGION: us-east-1
-      LOCALSTACK_ENDPOINT: http://localstack:4566
-
+      
+      # Test-specific Airflow settings
+      AIRFLOW_HOME: /app
+      AIRFLOW__CORE__UNIT_TEST_MODE: "true"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /app/tests/dags
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_db:5432/${POSTGRES_DB}
+      
+      # Test timeouts and retries
+      TEST_TIMEOUT: ${TEST_TIMEOUT:-300}
+      TEST_RETRIES: ${TEST_RETRIES:-3}
+      
+    volumes:
+      - .:/app:cached
+      - ./tests:/app/tests:cached
+      - ./config/test:/app/config/test:ro
+      
     depends_on:
-      - db
-      - redshift_sim
-      - localstack
+      db:  # ✅ Use actual service name from main compose
+        condition: service_healthy
+      redshift_sim:  # ✅ Use actual service name from main compose
+        condition: service_healthy
+      localstack:  # ✅ Use actual service name from main compose
+        condition: service_healthy
+      airflow-webserver:  # ✅ Use actual service name from main compose
+        condition: service_healthy
+      airflow-scheduler:  # ✅ Use actual service name from main compose
+        condition: service_healthy
+        
     networks:
       - etl_net
+      
+    # Improved test command with better error handling
+    command: >
+      bash -c "
+        echo 'Starting integration tests...' &&
+        echo 'Environment check:' &&
+        env | grep -E '(POSTGRES|AIRFLOW|REDSHIFT|AWS)' | sort &&
+        echo '=================================' &&
+        echo 'Network connectivity check:' &&
+        echo 'Testing PostgreSQL connection...' &&
+        timeout 30 bash -c 'until pg_isready -h postgres_db -U ${POSTGRES_USER} -d ${POSTGRES_DB}; do sleep 1; done' &&
+        echo 'Testing Redshift connection...' &&
+        timeout 30 bash -c 'until pg_isready -h redshift_sim -U ${REDSHIFT_USER:-redshift_user} -d ${REDSHIFT_DB:-redshift_db}; do sleep 1; done' &&
+        echo 'Testing LocalStack connection...' &&
+        timeout 30 bash -c 'until curl -f http://localstack:4566/_localstack/health; do sleep 1; done' &&
+        echo 'Testing Airflow webserver...' &&
+        timeout 30 bash -c 'until curl -f http://airflow_webserver:8080/health; do sleep 1; done' &&
+        echo '=================================' &&
+        echo 'All services are ready! Running tests...' &&
+        python -m pytest tests/ -v --tb=short --maxfail=1 -x
+      "
+      
+    restart: "no"
+    
+    # Resource limits for test container
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
 
-networks:
-  etl_net:
-    external: false
+  # Override services for testing with faster startup
+  db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 20s
+
+  redshift_sim:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${REDSHIFT_USER:-redshift_user} -d ${REDSHIFT_DB:-redshift_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 20s
+
+  localstack:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  airflow-webserver:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 4
+      start_period: 40s
+
+  airflow-scheduler:
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname airflow_scheduler"]
+      interval: 15s
+      timeout: 10s
+      retries: 4
+      start_period: 40s
+
+  # Disable non-essential services for faster testing
+  fluentbit:
+    deploy:
+      replicas: 0

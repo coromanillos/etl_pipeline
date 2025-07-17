@@ -186,12 +186,6 @@ class TestFloatSubtype(AstypeTests):
         with pytest.raises(TypeError, match=msg):
             index.astype(dtype)
 
-    @pytest.mark.filterwarnings(
-        "ignore:invalid value encountered in cast:RuntimeWarning"
-    )
-    def test_astype_category(self, index):
-        super().test_astype_category(index)
-
 
 class TestDatetimelikeSubtype(AstypeTests):
     """Tests specific to IntervalIndex with datetime-like subtype"""
@@ -212,18 +206,15 @@ class TestDatetimelikeSubtype(AstypeTests):
     def test_subtype_integer(self, index, subtype):
         dtype = IntervalDtype(subtype, "right")
 
-        if subtype != "int64":
-            msg = (
-                r"Cannot convert interval\[(timedelta64|datetime64)\[ns.*\], .*\] "
-                r"to interval\[uint64, .*\]"
-            )
-            with pytest.raises(TypeError, match=msg):
-                index.astype(dtype)
-            return
+        warn = None
+        if index.isna().any() and subtype == "uint64":
+            warn = FutureWarning
+        msg = "In a future version, this astype will raise if the conversion overflows"
 
-        result = index.astype(dtype)
-        new_left = index.left.astype(subtype)
-        new_right = index.right.astype(subtype)
+        with tm.assert_produces_warning(warn, match=msg):
+            result = index.astype(dtype)
+            new_left = index.left.astype(subtype)
+            new_right = index.right.astype(subtype)
 
         expected = IntervalIndex.from_arrays(new_left, new_right, closed=index.closed)
         tm.assert_index_equal(result, expected)
