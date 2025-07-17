@@ -54,13 +54,7 @@ def test_where_unsafe_upcast(dtype, expected_dtype):
     values = [2.5, 3.5, 4.5, 5.5, 6.5]
     mask = s < 5
     expected = Series(values + list(range(5, 10)), dtype=expected_dtype)
-    warn = (
-        None
-        if np.dtype(dtype).kind == np.dtype(expected_dtype).kind == "f"
-        else FutureWarning
-    )
-    with tm.assert_produces_warning(warn, match="incompatible dtype"):
-        s[mask] = values
+    s[mask] = values
     tm.assert_series_equal(s, expected)
 
 
@@ -72,8 +66,7 @@ def test_where_unsafe():
     mask = s > 5
     expected = Series(list(range(6)) + values, dtype="float64")
 
-    with tm.assert_produces_warning(FutureWarning, match="incompatible dtype"):
-        s[mask] = values
+    s[mask] = values
     tm.assert_series_equal(s, expected)
 
     # see gh-3235
@@ -121,7 +114,7 @@ def test_where_unsafe():
 
 
 def test_where():
-    s = Series(np.random.default_rng(2).standard_normal(5))
+    s = Series(np.random.randn(5))
     cond = s > 0
 
     rs = s.where(cond).dropna()
@@ -150,7 +143,7 @@ def test_where():
 
 
 def test_where_error():
-    s = Series(np.random.default_rng(2).standard_normal(5))
+    s = Series(np.random.randn(5))
     cond = s > 0
 
     msg = "Array conditional must be same shape as self"
@@ -239,7 +232,7 @@ def test_where_setitem_invalid():
         "different length than the value"
     )
     # slice
-    s = Series(list("abc"), dtype=object)
+    s = Series(list("abc"))
 
     with pytest.raises(ValueError, match=msg("slice")):
         s[0:3] = list(range(27))
@@ -249,18 +242,18 @@ def test_where_setitem_invalid():
     tm.assert_series_equal(s.astype(np.int64), expected)
 
     # slice with step
-    s = Series(list("abcdef"), dtype=object)
+    s = Series(list("abcdef"))
 
     with pytest.raises(ValueError, match=msg("slice")):
         s[0:4:2] = list(range(27))
 
-    s = Series(list("abcdef"), dtype=object)
+    s = Series(list("abcdef"))
     s[0:4:2] = list(range(2))
     expected = Series([0, "b", 1, "d", "e", "f"])
     tm.assert_series_equal(s, expected)
 
     # neg slices
-    s = Series(list("abcdef"), dtype=object)
+    s = Series(list("abcdef"))
 
     with pytest.raises(ValueError, match=msg("slice")):
         s[:-1] = list(range(27))
@@ -270,18 +263,18 @@ def test_where_setitem_invalid():
     tm.assert_series_equal(s, expected)
 
     # list
-    s = Series(list("abc"), dtype=object)
+    s = Series(list("abc"))
 
     with pytest.raises(ValueError, match=msg("list-like")):
         s[[0, 1, 2]] = list(range(27))
 
-    s = Series(list("abc"), dtype=object)
+    s = Series(list("abc"))
 
     with pytest.raises(ValueError, match=msg("list-like")):
         s[[0, 1, 2]] = list(range(2))
 
     # scalar
-    s = Series(list("abc"), dtype=object)
+    s = Series(list("abc"))
     s[0] = list(range(10))
     expected = Series([list(range(10)), "b", "c"])
     tm.assert_series_equal(s, expected)
@@ -326,7 +319,7 @@ def test_broadcast(size, mask, item, box):
 
 
 def test_where_inplace():
-    s = Series(np.random.default_rng(2).standard_normal(5))
+    s = Series(np.random.randn(5))
     cond = s > 0
 
     rs = s.copy()
@@ -393,25 +386,20 @@ def test_where_datetimelike_coerce(dtype):
     expected = Series([10, 10])
     mask = np.array([False, False])
 
-    msg = "Downcasting behavior in Series and DataFrame methods 'where'"
-    with tm.assert_produces_warning(FutureWarning, match=msg):
-        rs = ser.where(mask, [10, 10])
+    rs = ser.where(mask, [10, 10])
     tm.assert_series_equal(rs, expected)
 
-    with tm.assert_produces_warning(FutureWarning, match=msg):
-        rs = ser.where(mask, 10)
+    rs = ser.where(mask, 10)
     tm.assert_series_equal(rs, expected)
 
-    with tm.assert_produces_warning(FutureWarning, match=msg):
-        rs = ser.where(mask, 10.0)
+    rs = ser.where(mask, 10.0)
     tm.assert_series_equal(rs, expected)
 
-    with tm.assert_produces_warning(FutureWarning, match=msg):
-        rs = ser.where(mask, [10.0, 10.0])
+    rs = ser.where(mask, [10.0, 10.0])
     tm.assert_series_equal(rs, expected)
 
     rs = ser.where(mask, [10.0, np.nan])
-    expected = Series([10, np.nan], dtype="object")
+    expected = Series([10, None], dtype="object")
     tm.assert_series_equal(rs, expected)
 
 

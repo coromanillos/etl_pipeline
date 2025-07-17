@@ -19,17 +19,17 @@ from collections import (
 )
 import itertools
 import numbers
+import random
 import string
 import sys
 from typing import (
-    TYPE_CHECKING,
     Any,
+    Mapping,
 )
-import warnings
 
 import numpy as np
 
-from pandas.util._exceptions import find_stack_level
+from pandas._typing import type_t
 
 from pandas.core.dtypes.cast import construct_1d_object_array_from_listlike
 from pandas.core.dtypes.common import (
@@ -44,11 +44,6 @@ from pandas.api.extensions import (
     ExtensionDtype,
 )
 from pandas.core.indexers import unpack_tuple_and_ellipses
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from pandas._typing import type_t
 
 
 class JSONDtype(ExtensionDtype):
@@ -86,7 +81,7 @@ class JSONArray(ExtensionArray):
         # self._values = self.values = self.data
 
     @classmethod
-    def _from_sequence(cls, scalars, *, dtype=None, copy=False):
+    def _from_sequence(cls, scalars, dtype=None, copy=False):
         return cls(scalars)
 
     @classmethod
@@ -115,13 +110,11 @@ class JSONArray(ExtensionArray):
         else:
             item = pd.api.indexers.check_array_indexer(self, item)
             if is_bool_dtype(item.dtype):
-                return type(self)._from_sequence(
-                    [x for x, m in zip(self, item) if m], dtype=self.dtype
-                )
+                return self._from_sequence([x for x, m in zip(self, item) if m])
             # integer
             return type(self)([self.data[i] for i in item])
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key, value):
         if isinstance(key, numbers.Integral):
             self.data[key] = value
         else:
@@ -149,28 +142,13 @@ class JSONArray(ExtensionArray):
     def __ne__(self, other):
         return NotImplemented
 
-    def __array__(self, dtype=None, copy=None):
-        if copy is False:
-            warnings.warn(
-                "Starting with NumPy 2.0, the behavior of the 'copy' keyword has "
-                "changed and passing 'copy=False' raises an error when returning "
-                "a zero-copy NumPy array is not possible. pandas will follow "
-                "this behavior starting with pandas 3.0.\nThis conversion to "
-                "NumPy requires a copy, but 'copy=False' was passed. Consider "
-                "using 'np.asarray(..)' instead.",
-                FutureWarning,
-                stacklevel=find_stack_level(),
-            )
-
+    def __array__(self, dtype=None):
         if dtype is None:
             dtype = object
         if dtype == object:
             # on py38 builds it looks like numpy is inferring to a non-1D array
             return construct_1d_object_array_from_listlike(list(self))
-        if copy is None:
-            # Note: branch avoids `copy=None` for NumPy 1.x support
-            return np.asarray(self.data, dtype=dtype)
-        return np.asarray(self.data, dtype=dtype, copy=copy)
+        return np.asarray(self.data, dtype=dtype)
 
     @property
     def nbytes(self) -> int:
@@ -207,7 +185,7 @@ class JSONArray(ExtensionArray):
             except IndexError as err:
                 raise IndexError(msg) from err
 
-        return type(self)._from_sequence(output, dtype=self.dtype)
+        return self._from_sequence(output)
 
     def copy(self):
         return type(self)(self.data[:])
@@ -225,12 +203,10 @@ class JSONArray(ExtensionArray):
                 return self.copy()
             return self
         elif isinstance(dtype, StringDtype):
-            arr_cls = dtype.construct_array_type()
-            return arr_cls._from_sequence(self, dtype=dtype, copy=False)
-        elif not copy:
-            return np.asarray([dict(x) for x in self], dtype=dtype)
-        else:
-            return np.array([dict(x) for x in self], dtype=dtype, copy=copy)
+            value = self.astype(str)  # numpy doesn'y like nested dicts
+            return dtype.construct_array_type()._from_sequence(value, copy=False)
+
+        return np.array([dict(x) for x in self], dtype=dtype, copy=copy)
 
     def unique(self):
         # Parent method doesn't work since np.array will try to infer
@@ -254,19 +230,14 @@ class JSONArray(ExtensionArray):
         frozen = [tuple(x.items()) for x in self]
         return construct_1d_object_array_from_listlike(frozen)
 
-    def _pad_or_backfill(self, *, method, limit=None, copy=True):
-        # GH#56616 - test EA method without limit_area argument
-        return super()._pad_or_backfill(method=method, limit=limit, copy=copy)
-
 
 def make_data():
     # TODO: Use a regular dict. See _NDFrameIndexer._setitem_with_indexer
-    rng = np.random.default_rng(2)
     return [
         UserDict(
             [
-                (rng.choice(list(string.ascii_letters)), rng.integers(0, 100))
-                for _ in range(rng.integers(0, 10))
+                (random.choice(string.ascii_letters), random.randint(0, 100))
+                for _ in range(random.randint(0, 10))
             ]
         )
         for _ in range(100)

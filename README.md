@@ -130,6 +130,54 @@ Make sure your `.env` file is properly configured.
 
 ```bash
 
-docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.test.yml build test_runner
+docker compose -f docker-compose.yml -f docker-compose.test.yml up --build --abort-on-container-exit test_runner
 
-docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test_runner
+docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
+
+
+docker compose down -v
+docker volume prune
+
+docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
+
+AUDIT - Any files wit so they are consistent with docker-compose.yml and .env.
+LOCALSTACK_VOLUME_DIR
+DATA_DIR
+
+# Integration testing:
+exit venv, run integration tests completeling within docker.
+
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
+
+
+# Unit testing: 
+activate venv and run pytest.
+
+>> source .venv/bin/activate
+>> pytest
+
+# Integration testing:
+
+>> docker compose up -d 
+>> docker compose exec airflow-webserver bash
+>> source .venv/bin/activate
+>> pytest
+
+# TODO
+
+Check why rest_to_postgres.extract is failing.
+Look at the task logs for rest_to_postgres.extract. Likely causes:
+
+    Bad connection (API / Postgres)
+
+    Credentials missing
+
+    Code error
+
+    Schema mismatch
+
+    Timeout
+
+Similarly, check why postgres_to_redshift.validate_transform_load is retrying. The logs for this task will also tell you why it's failing.

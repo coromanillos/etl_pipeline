@@ -63,19 +63,12 @@ def test_astype_to_integer_array():
     tm.assert_extension_array_equal(result, expected)
 
 
-def test_astype_str(using_infer_string):
+def test_astype_str():
     a = pd.array([0.1, 0.2, None], dtype="Float64")
+    expected = np.array(["0.1", "0.2", "<NA>"], dtype=object)
 
-    if using_infer_string:
-        expected = pd.array(["0.1", "0.2", None], dtype=pd.StringDtype(na_value=np.nan))
-
-        tm.assert_extension_array_equal(a.astype(str), expected)
-        tm.assert_extension_array_equal(a.astype("str"), expected)
-    else:
-        expected = np.array(["0.1", "0.2", "<NA>"], dtype="U32")
-
-        tm.assert_numpy_array_equal(a.astype(str), expected)
-        tm.assert_numpy_array_equal(a.astype("str"), expected)
+    tm.assert_numpy_array_equal(a.astype(str), expected)
+    tm.assert_numpy_array_equal(a.astype("str"), expected)
 
 
 def test_astype_copy():
@@ -123,13 +116,3 @@ def test_astype_object(dtype):
     # check exact element types
     assert isinstance(result[0], float)
     assert result[1] is pd.NA
-
-
-def test_Float64_conversion():
-    # GH#40729
-    testseries = pd.Series(["1", "2", "3", "4"], dtype="object")
-    result = testseries.astype(pd.Float64Dtype())
-
-    expected = pd.Series([1.0, 2.0, 3.0, 4.0], dtype=pd.Float64Dtype())
-
-    tm.assert_series_equal(result, expected)
