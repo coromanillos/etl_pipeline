@@ -16,10 +16,10 @@ import logging
 # you might want to add root/airflow/src to PYTHONPATH or refactor imports accordingly.
 
 from src.utils.slack_alert import slack_failed_task_alert
-from dags.postgres_cleanup.table_cleaner import drop_all_tables
-from dags.postgres_cleanup.vacuum_executor import vacuum_postgres
-from dags.postgres_cleanup.cleanup_logger import log_cleanup_summary
-from utils.cleanup_config_loader import load_cleanup_config
+from src.etl_cleanup_postgres_after_archive.table_cleaner import drop_all_tables
+from src.etl_cleanup_postgres_after_archive.vacuum_executor import vacuum_postgres
+from src.etl_cleanup_postgres_after_archive.cleanup_logger import log_cleanup_summary
+from src.etl_cleanup_postgres_after_archive.cleanup_config_loader import load_cleanup_config
 
 logger = logging.getLogger(__name__)
 logger.info("🚀 Initializing postgres_cleanup DAG")
