@@ -3,7 +3,7 @@
 # Airflow common configuration template
 x-airflow-common: &airflow-common
   build:
-    context: .
+    context: ./airflow
     dockerfile: Dockerfile
   image: etl_pipeline_airflow:${VERSION:-latest}
   restart: unless-stopped
@@ -14,86 +14,21 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DAGS_FOLDER: /app/airflow/dags
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-    AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: 16
-    AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: 16
-    AIRFLOW__CORE__PARALLELISM: 32
-    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-airflow}
-    AIRFLOW__DATABASE__SQL_ALCHEMY_POOL_SIZE: 5
-    AIRFLOW__DATABASE__SQL_ALCHEMY_POOL_RECYCLE: 3600
-    AIRFLOW__DATABASE__SQL_ALCHEMY_POOL_PRE_PING: "true"
-    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-    AIRFLOW__WEBSERVER__RBAC: "true"
-    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"
-    AIRFLOW__WEBSERVER__AUTHENTICATE: "true"
-    AIRFLOW__WEBSERVER__AUTH_BACKEND: airflow.auth.backends.password_auth
-    AIRFLOW__SCHEDULER__PARSING_PROCESSES: 2
-    AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: 300
-    AIRFLOW__SCHEDULER__CATCHUP_BY_DEFAULT: "false"
-    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
-    AIRFLOW__LOGGING__LOGGING_LEVEL: INFO
-    AIRFLOW__LOGGING__FAB_LOGGING_LEVEL: WARN
-    AWS_REGION: ${AWS_REGION:-us-east-1}
-    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-    AIRFLOW__SMTP__SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
-    AIRFLOW__SMTP__SMTP_STARTTLS: "true"
-    AIRFLOW__SMTP__SMTP_SSL: "false"
-    AIRFLOW__SMTP__SMTP_PORT: ${SMTP_PORT:-587}
-    AIRFLOW__SMTP__SMTP_USER: ${ALERT_EMAILS}
-    AIRFLOW__SMTP__SMTP_PASSWORD: ${ALERT_EMAIL_PASSWORD}
-    AIRFLOW__SMTP__SMTP_MAIL_FROM: ${ALERT_EMAILS}
-
-    # Add PYTHONPATH so 'src' is importable in dags
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     PYTHONPATH: /app
-
   volumes:
-    - .:/app:cached
-    - ./airflow/dags:/app/airflow/dags:cached  # Explicit DAGs mount
+    - ./airflow/dags:/app/airflow/dags:cached
     - ./airflow/plugins:/app/airflow/plugins:cached
-    - ./config:/opt/airflow/config:cached       # <-- Added explicit mount for config files (important)
+    - ./config:/opt/airflow/config:ro
     - airflow_logs:/app/logs
     - airflow_plugins:/app/plugins
-
+  networks:
+    - etl_net
   depends_on:
     db:
       condition: service_healthy
 
-  networks:
-    - etl_net
-
-  logging:
-    driver: json-file
-    options:
-      max-size: "10m"
-      max-file: "5"
-
 services:
-  db:
-    container_name: postgres_db
-    image: postgres:16-alpine
-    restart: unless-stopped
-    ports:
-      - "${POSTGRES_PORT:-5434}:5432"
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-airflow}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-airflow}
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
-      POSTGRES_SHARED_PRELOAD_LIBRARIES: pg_stat_statements
-      POSTGRES_MAX_CONNECTIONS: ${POSTGRES_MAX_CONNECTIONS:-100}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-airflow} -d ${POSTGRES_DB:-airflow}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - etl_net
-
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow_webserver
@@ -111,9 +46,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    depends_on:
-      db:
-        condition: service_healthy
 
   airflow-scheduler:
     <<: *airflow-common
@@ -125,9 +57,28 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    depends_on:
-      db:
-        condition: service_healthy
+
+  db:
+    container_name: postgres_db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/dev-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - etl_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redshift_sim:
     container_name: redshift_sim
@@ -136,56 +87,51 @@ services:
     ports:
       - "${REDSHIFT_PORT:-5433}:5432"
     environment:
-      POSTGRES_USER: ${REDSHIFT_USER:-redshift_user}
-      POSTGRES_PASSWORD: ${REDSHIFT_PASSWORD:-redshift_pass}
-      POSTGRES_DB: ${REDSHIFT_DB:-redshift_db}
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
-      POSTGRES_SHARED_PRELOAD_LIBRARIES: pg_stat_statements
-      POSTGRES_MAX_CONNECTIONS: ${REDSHIFT_MAX_CONNECTIONS:-100}
+      POSTGRES_USER: ${REDSHIFT_USER}
+      POSTGRES_PASSWORD: ${REDSHIFT_PASSWORD}
+      POSTGRES_DB: ${REDSHIFT_DB}
     volumes:
       - redshift_data:/var/lib/postgresql/data
       - ./db/redshift-init:/docker-entrypoint-initdb.d:ro
+      - ./sql/redshift:/app/sql:ro
+    networks:
+      - etl_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${REDSHIFT_USER:-redshift_user} -d ${REDSHIFT_DB:-redshift_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${REDSHIFT_USER} -d ${REDSHIFT_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    networks:
-      - etl_net
 
   localstack:
-    container_name: localstack
     image: localstack/localstack:${LOCALSTACK_VERSION:-3}
+    container_name: localstack
     restart: unless-stopped
     ports:
       - "${LOCALSTACK_PORT:-4566}:4566"
       - "${LOCALSTACK_EDGE_PORT:-4571}:4571"
     environment:
-      SERVICES: ${LOCALSTACK_SERVICES:-s3,secretsmanager,ssm,logs}
-      DEFAULT_REGION: ${AWS_REGION:-us-east-1}
-      AWS_ACCESS_KEY_ID: ${LOCALSTACK_ACCESS_KEY:-test}
-      AWS_SECRET_ACCESS_KEY: ${LOCALSTACK_SECRET_KEY:-test}
+      SERVICES: s3,secretsmanager,ssm,logs
+      DEFAULT_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${LOCALSTACK_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${LOCALSTACK_SECRET_KEY}
       DATA_DIR: /tmp/localstack/data
-      PERSISTENCE: ${LOCALSTACK_PERSISTENCE:-1}
-      DISABLE_CORS_CHECKS: ${LOCALSTACK_DISABLE_CORS:-0}
-      SKIP_INFRA_DOWNLOADS: ${LOCALSTACK_SKIP_DOWNLOADS:-0}
     volumes:
       - localstack_data:/tmp/localstack/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ./localstack/init:/etc/localstack/init/ready.d:ro
+    networks:
+      - etl_net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
-    networks:
-      - etl_net
 
   fluentbit:
-    container_name: fluentbit
     image: fluent/fluent-bit:${FLUENTBIT_VERSION:-2.2.2}
+    container_name: fluentbit
     restart: unless-stopped
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
@@ -194,9 +140,9 @@ services:
       - fluentbit_storage:/var/log/fluent-bit-storage
     networks:
       - etl_net
-    read_only: true
     tmpfs:
       - /tmp
+    read_only: true
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:2020/api/v1/health || exit 1"]
       interval: 30s
@@ -220,6 +166,3 @@ volumes:
 networks:
   etl_net:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

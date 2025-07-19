@@ -15,7 +15,6 @@ from src.utils.slack_alert import slack_failed_task_alert
 from src.utils.config import get_env_var
 
 logger = logging.getLogger(__name__)
-logger.info("🚀 Initializing controller_data_pipeline DAG")
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -24,9 +23,11 @@ DEFAULT_ARGS = {
     "on_failure_callback": slack_failed_task_alert,
 }
 
-get_env_var("SLACK_WEBHOOK_URL", required=True)
-
 def create_controller_data_pipeline_dag():
+    # Check required env vars at runtime, not import time
+    slack_webhook = get_env_var("SLACK_WEBHOOK_URL", required=True)
+    logger.info("🚀 Initializing controller_data_pipeline DAG")
+
     with DAG(
         dag_id="controller_data_pipeline",
         description="Master DAG that coordinates archival, redshift loading, and cleanup.",
