@@ -9,17 +9,15 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-import os
 import logging
 
 from src.etl_rest_to_postgres.extract import extract_data
 from src.etl_rest_to_postgres.transform import process_raw_data
 from src.etl_rest_to_postgres.postgres_loader import load_data
 from src.utils.slack_alert import slack_failed_task_alert
-from src.utils.config import load_config
+from src.utils.config import load_config, get_env_var
 
 logger = logging.getLogger(__name__)
-logger.info("🧹 Initializing rest_to_postgres DAG...")
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -28,9 +26,9 @@ DEFAULT_ARGS = {
     "retries": 1,
 }
 
-CONFIG_PATH = os.getenv("REST_TO_POSTGRES_CONFIG_PATH", "/opt/airflow/config/rest_config.yaml")
+def create_rest_to_postgres_dag():
+    config_path = get_env_var("REST_TO_POSTGRES_CONFIG_PATH")
 
-def create_rest_to_postgres_dag(config_path=CONFIG_PATH):
     with DAG(
         dag_id="rest_to_postgres",
         start_date=datetime(2024, 1, 1),

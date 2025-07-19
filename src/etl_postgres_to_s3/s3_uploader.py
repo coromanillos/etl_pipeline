@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def generate_s3_key(table_name: str, config: dict, timestamp: str = None, key_type: str = "archive") -> str:
     now = datetime.utcnow()
     date_str = now.strftime("%Y-%m-%d")
-    time_str = now.strftime("%Y%m%dT%H%M%SZ")
+    time_str = timestamp or now.strftime("%Y%m%dT%H%M%SZ")
     
     if key_type == "logs":
         path_format = config["s3"].get("log_path_format", "logs/{table}/dt={date}/{filename}")
@@ -28,7 +28,6 @@ def generate_s3_key(table_name: str, config: dict, timestamp: str = None, key_ty
         .replace("{date}", date_str)
         .replace("{filename}", filename)
     )
-
 
 def upload_file_to_s3(local_file_path: str, config: dict, s3_key: str, bucket_name: str):
     s3_client = get_s3_client(config)

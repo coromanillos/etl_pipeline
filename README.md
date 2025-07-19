@@ -181,3 +181,8 @@ Look at the task logs for rest_to_postgres.extract. Likely causes:
     Timeout
 
 Similarly, check why postgres_to_redshift.validate_transform_load is retrying. The logs for this task will also tell you why it's failing.
+
+
+
+TODO - 
+focus on config loading and ensuring it’s handled correctly at runtime, passed as parameters, and not loaded at import/parse time

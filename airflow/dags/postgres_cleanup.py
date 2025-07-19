@@ -1,25 +1,21 @@
 ###################################################
 # Title: postgres_cleanup.py
 # Description: Cleans up PostgreSQL after pipeline
-# Date: 2025-07-06 | Version: 3.0 (testable, DI-ready)
+# Date: 2025-07-06 | Version: 3.1 (runtime config loading)
 ###################################################
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime
-import os
 import logging
-
-# Adjust imports here based on your folder structure.
-# If your utils are in root/airflow/src/utils and root/airflow/src/dags/postgres_cleanup,
-# you might want to add root/airflow/src to PYTHONPATH or refactor imports accordingly.
 
 from src.utils.slack_alert import slack_failed_task_alert
 from src.etl_cleanup_postgres_after_archive.table_cleaner import drop_all_tables
 from src.etl_cleanup_postgres_after_archive.vacuum_executor import vacuum_postgres
 from src.etl_cleanup_postgres_after_archive.cleanup_logger import log_cleanup_summary
 from src.etl_cleanup_postgres_after_archive.cleanup_config_loader import load_cleanup_config
+from src.utils.config import get_env_var  
 
 logger = logging.getLogger(__name__)
 logger.info("🚀 Initializing postgres_cleanup DAG")
@@ -30,12 +26,12 @@ DEFAULT_ARGS = {
     "on_failure_callback": slack_failed_task_alert,
 }
 
-CONFIG_PATH = os.getenv(
-    "POSTGRES_CLEANUP_CONFIG_PATH",
-    "/opt/airflow/config/cleanup_config.yaml"
-)
+def create_postgres_cleanup_dag():
+    config_path = get_env_var(
+        "POSTGRES_CLEANUP_CONFIG_PATH",
+        required=False
+    ) or "/opt/airflow/config/cleanup_config.yaml"
 
-def create_postgres_cleanup_dag(config_path=CONFIG_PATH):
     with DAG(
         dag_id="postgres_cleanup",
         start_date=datetime(2024, 1, 1),
@@ -45,20 +41,20 @@ def create_postgres_cleanup_dag(config_path=CONFIG_PATH):
         tags=["postgres", "cleanup", "archive"],
     ) as dag:
 
-        config = load_cleanup_config(config_path)
+        config, cleanup_logger = load_cleanup_config(config_path)
 
         with TaskGroup("cleanup_postgres") as cleanup_group:
 
             def task_drop_tables(**kwargs):
-                drop_all_tables(config=config, logger=logger)
+                drop_all_tables(config=config, logger=cleanup_logger)
 
             def task_vacuum_db(**kwargs):
-                vacuum_postgres(config=config, logger=logger)
+                vacuum_postgres(config=config, logger=cleanup_logger)
 
             def task_log_cleanup(**kwargs):
                 log_cleanup_summary(
                     config=config,
-                    logger=logger,
+                    logger=cleanup_logger,
                     message="✅ PostgreSQL cleanup completed successfully."
                 )
 
@@ -80,5 +76,3 @@ def create_postgres_cleanup_dag(config_path=CONFIG_PATH):
             drop_tables >> vacuum_db >> log_cleanup
 
         return dag
-
-dag = create_postgres_cleanup_dag()

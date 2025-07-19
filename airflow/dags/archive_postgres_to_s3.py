@@ -9,17 +9,14 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-import os
 import logging
+import os
 
 from src.etl_postgres_to_s3.parquet_converter import convert_to_parquet
 from src.etl_postgres_to_s3.s3_uploader import upload_file_to_s3, generate_s3_key
 from src.utils.postgres_extractor import get_all_table_names, extract_table_data
 from src.utils.slack_alert import slack_failed_task_alert
-from src.utils.config import load_config
-
-logger = logging.getLogger(__name__)
-logger.info("🧹 Initializing archive_postgres_to_s3 DAG...")
+from src.utils.config import load_config, get_env_var
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -27,9 +24,15 @@ DEFAULT_ARGS = {
     "on_failure_callback": slack_failed_task_alert,
 }
 
-CONFIG_PATH = os.getenv("ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH", "/opt/airflow/config/archive_config.yaml")
+def create_archive_postgres_to_s3_dag():
+    # Attempt to get config path from env, allow missing without error
+    config_path = get_env_var("ARCHIVE_POSTGRES_TO_S3_CONFIG_PATH", required=False)
+    if not config_path:
+        config_path = "/opt/airflow/config/archive_config.yaml"
 
-def create_archive_postgres_to_s3_dag(config_path=CONFIG_PATH):
+    logger = logging.getLogger(__name__)
+    logger.info("🧹 Initializing archive_postgres_to_s3 DAG...")
+
     with DAG(
         dag_id="archive_postgres_to_s3",
         start_date=datetime(2024, 1, 1),
@@ -71,6 +74,5 @@ def create_archive_postgres_to_s3_dag(config_path=CONFIG_PATH):
         )
 
         return dag
-
 
 dag = create_archive_postgres_to_s3_dag()

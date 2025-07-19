@@ -24,3 +24,4 @@ def extract_data(config, fetch_fn=None):
     except Exception as e:
         logger.exception(f"❌ Exception during data extraction: {e}")
         return None
+
