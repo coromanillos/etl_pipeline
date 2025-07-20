@@ -28,7 +28,7 @@ def load_data(processed_data: list, config: dict, session_factory=None) -> int:
         try:
             records.append(
                 IntradayData(
-                    timestamp=datetime.fromisoformat(row["timestamp"]),
+                    timestamp=row["timestamp"] if isinstance(row["timestamp"], datetime) else datetime.fromisoformat(str(row["timestamp"])),
                     open=float(row["open"]),
                     high=float(row["high"]),
                     low=float(row["low"]),
@@ -45,7 +45,6 @@ def load_data(processed_data: list, config: dict, session_factory=None) -> int:
         logger.warning(f"⚠️ No valid records to insert. Skipped: {skipped}")
         return 0
 
-    # Inject session factory if not provided (production or testing)
     session_factory = session_factory or get_db_session(config)
 
     try:

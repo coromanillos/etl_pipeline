@@ -3,9 +3,13 @@
 # Purpose: Drops all tables in target PostgreSQL schema
 ###############################################
 
+import logging
 from src.utils.postgres_extractor import get_postgres_connection
 
-def drop_all_tables(config: dict, logger):
+
+def drop_all_tables(config: dict) -> None:
+    logger = logging.getLogger("airflow.task.postgres_cleanup")
+
     schema = config["postgres_loader"].get("schema", "public")
     database_url = config["postgres_loader"]["connection_string"]
 
@@ -26,5 +30,5 @@ def drop_all_tables(config: dict, logger):
                 conn.commit()
                 logger.info(f"✅ Dropped all tables in schema '{schema}'.")
     except Exception as e:
-        logger.error(f"❌ Failed to drop tables: {e}", exc_info=True)
+        logger.error(f"❌ Failed to drop tables in schema '{schema}': {e}", exc_info=True)
         raise

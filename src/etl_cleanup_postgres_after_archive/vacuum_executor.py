@@ -3,9 +3,13 @@
 # Purpose: Performs VACUUM FULL on PostgreSQL
 ###############################################
 
+import logging
 from src.utils.postgres_extractor import get_postgres_connection
 
-def vacuum_postgres(config: dict, logger):
+
+def vacuum_postgres(config: dict) -> None:
+    logger = logging.getLogger("airflow.task.postgres_cleanup")
+
     database_url = config["postgres_loader"]["connection_string"]
 
     try:
