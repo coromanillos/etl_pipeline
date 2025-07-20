@@ -1,11 +1,21 @@
 # config/test/test_redshift_config.yaml
 
+postgres_loader:
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_PASSWORD}
+  host: ${POSTGRES_HOST}
+  port: ${POSTGRES_PORT}
+  db: ${POSTGRES_DB}
+  schema: public
+  table: intraday_data
+  connection_string: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+
 redshift:
   host: redshift_sim
   port: 5432
   db: redshift_db
-  user: redshift_user
-  password: redshift_pass
+  user: ${REDSHIFT_USER}
+  password: ${REDSHIFT_PASSWORD}
   schema: public
   table: test_table
   connection_string: postgresql://redshift_user:redshift_pass@redshift_sim:5432/redshift_db
