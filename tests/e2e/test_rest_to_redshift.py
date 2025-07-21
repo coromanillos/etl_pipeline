@@ -1,3 +1,5 @@
+# tests/e2e/test_rest_to_redshift.py
+
 import pytest
 import logging
 import pandas as pd

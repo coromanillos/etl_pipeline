@@ -2,14 +2,11 @@
 
 import pytest
 import os
-import logging
-import pandas as pd
-from src.etl_postgres_to_s3.parquet_converter import convert_to_parquet, generate_parquet_path
+from src.etl_postgres_to_s3.parquet_converter import convert_to_parquet
 from src.etl_postgres_to_s3.s3_uploader import upload_file_to_s3, generate_s3_key
 from src.utils.postgres_extractor import extract_table_data
 from src.utils.aws_client import get_s3_client
 
-logger = logging.getLogger(__name__)
 
 @pytest.mark.integration
 def test_postgres_to_s3_pipeline(test_postgres_config, clear_postgres_table, delete_s3_key):
@@ -31,7 +28,5 @@ def test_postgres_to_s3_pipeline(test_postgres_config, clear_postgres_table, del
     result = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=s3_key)
     assert "Contents" in result, f"Uploaded file not found in S3 at s3://{bucket_name}/{s3_key}"
 
-    if os.path.exists(parquet_path):
-        os.remove(parquet_path)
+    os.remove(parquet_path)
     delete_s3_key(test_postgres_config, s3_key)
-

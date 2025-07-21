@@ -12,18 +12,15 @@ from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 
-def build_postgres_conn_string(cfg: dict) -> str:
-    pg = cfg["postgres_loader"]
-    return f"postgresql://{pg['user']}:{pg['password']}@{pg['host']}:{pg['port']}/{pg['db']}"
 
 def get_db_session(config: dict, engine_factory=create_engine, session_factory=sessionmaker):
     if not config:
         raise ValueError("❌ No config provided to get_db_session()")
 
     try:
-        database_url = build_postgres_conn_string(config)
+        database_url = config["postgres_loader"]["connection_string"]
     except KeyError as e:
-        logger.error(f"❌ Missing key in config to build connection string: {e}", exc_info=True)
+        logger.error(f"❌ Missing connection string in config: {e}", exc_info=True)
         raise
 
     try:

@@ -1,7 +1,7 @@
 ###################################################
 # Title: postgres_cleanup.py
 # Description: Cleans up PostgreSQL after pipeline
-# Date: 2025-07-20 | Version: 4.0 (DRY, uses shared utilities)
+# Date: 2025-07-21 | Version: 4.1 (Final, autocommit refactor)
 ###################################################
 
 from airflow import DAG
@@ -19,21 +19,23 @@ DEFAULT_ARGS = {
     "on_failure_callback": slack_failed_task_alert,
 }
 
+CONFIG = load_cleanup_config()
+
 
 def drop_tables_task(**context):
-    config = load_cleanup_config()
-    drop_all_tables(config=config)
+    """Drops all tables in the target PostgreSQL schema."""
+    drop_all_tables(config=CONFIG)
 
 
 def vacuum_db_task(**context):
-    config = load_cleanup_config()
-    vacuum_postgres(config=config)
+    """Performs VACUUM FULL on PostgreSQL. Now correctly uses autocommit via refactored utility."""
+    vacuum_postgres(config=CONFIG)
 
 
 def log_cleanup_task(**context):
-    config = load_cleanup_config()
+    """Logs a message indicating cleanup completion."""
     log_cleanup_summary(
-        config=config,
+        config=CONFIG,
         message="✅ PostgreSQL cleanup completed successfully."
     )
 

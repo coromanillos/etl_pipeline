@@ -1,4 +1,4 @@
-# test_cleanup_config_loader
+# tests/etl_cleanup_postgres_after_archive/test_cleanup_config_loader.py
  
 import pytest
 from unittest.mock import patch, MagicMock
