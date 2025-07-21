@@ -1,19 +1,15 @@
 ###################################################
 # Title: postgres_cleaner.py
 # Description: PostgreSQL schema/table management utilities
-# Date: 2025-07-20 | Version: 1.0 (Reusable, DRY, Clean)
+# Date: 2025-07-21 | Version: 1.2 (Final, autocommit refactor)
 ###################################################
 
 import logging
 from src.utils.db_client import get_postgres_connection
 
-def build_postgres_conn_string(cfg: dict) -> str:
-    pg = cfg["postgres_loader"]
-    return f"postgresql://{pg['user']}:{pg['password']}@{pg['host']}:{pg['port']}/{pg['db']}"
 
 def drop_all_tables(config: dict, logger: logging.Logger = None) -> None:
     schema = config["postgres_loader"]["schema"]
-    connection_string = build_postgres_conn_string(config)
 
     query = f"""
         DO $$ DECLARE
@@ -25,21 +21,22 @@ def drop_all_tables(config: dict, logger: logging.Logger = None) -> None:
         END $$;
     """
 
-    with get_postgres_connection({"postgres_loader": {"connection_string": connection_string}}) as conn:
+    with get_postgres_connection(config) as conn:
         with conn.cursor() as cur:
             cur.execute(query)
-            conn.commit()
+        conn.commit()
 
     if logger:
         logger.info(f"✅ Dropped all tables in schema '{schema}'.")
 
-def vacuum_postgres(config: dict, logger: logging.Logger = None) -> None:
-    connection_string = build_postgres_conn_string(config)
 
-    with get_postgres_connection({"postgres_loader": {"connection_string": connection_string}}) as conn:
+def vacuum_postgres(config: dict, logger: logging.Logger = None) -> None:
+    """Perform VACUUM FULL on the PostgreSQL database."""
+    conn = get_postgres_connection(config, autocommit=True)
+    try:
         with conn.cursor() as cur:
             cur.execute("VACUUM FULL;")
-            conn.commit()
-
-    if logger:
-        logger.info("✅ VACUUM FULL executed successfully.")
+        if logger:
+            logger.info("✅ VACUUM FULL executed successfully.")
+    finally:
+        conn.close()

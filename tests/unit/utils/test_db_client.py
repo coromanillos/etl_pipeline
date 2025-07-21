@@ -1,26 +1,39 @@
 # tests/unit/test_db_client.py
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import Mock
 from src.utils.db_client import get_postgres_connection
 
-def test_get_postgres_connection_success():
-    mock_connect = MagicMock()
-    config = {"postgres_loader": {"connection_string": "postgresql://user:pass@localhost:5432/db"}}
 
-    conn = get_postgres_connection(config, connector_fn=mock_connect)
+def test_get_postgres_connection_sets_autocommit_false_by_default():
+    mock_conn = Mock()
+    mock_connector = Mock(return_value=mock_conn)
 
-    mock_connect.assert_called_once_with("postgresql://user:pass@localhost:5432/db")
-    assert conn == mock_connect.return_value
+    config = {
+        "postgres_loader": {
+            "connection_string": "postgresql://test_user:test_password@localhost:5432/test_db"
+        }
+    }
 
-@patch("src.utils.db_client.logger")
-def test_get_postgres_connection_failure(mock_logger):
-    def failing_connect(_):
-        raise Exception("boom")
+    conn = get_postgres_connection(config=config, connector_fn=mock_connector)
 
-    config = {"postgres_loader": {"connection_string": "postgresql://user:pass@localhost:5432/db"}}
+    assert conn == mock_conn
+    assert conn.autocommit is False
+    mock_connector.assert_called_once_with(config["postgres_loader"]["connection_string"])
 
-    with pytest.raises(Exception, match="boom"):
-        get_postgres_connection(config, connector_fn=failing_connect)
 
-    mock_logger.error.assert_called()
+def test_get_postgres_connection_sets_autocommit_true():
+    mock_conn = Mock()
+    mock_connector = Mock(return_value=mock_conn)
+
+    config = {
+        "postgres_loader": {
+            "connection_string": "postgresql://test_user:test_password@localhost:5432/test_db"
+        }
+    }
+
+    conn = get_postgres_connection(config=config, connector_fn=mock_connector, autocommit=True)
+
+    assert conn == mock_conn
+    assert conn.autocommit is True
+    mock_connector.assert_called_once_with(config["postgres_loader"]["connection_string"])

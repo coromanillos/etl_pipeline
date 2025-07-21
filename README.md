@@ -165,24 +165,35 @@ activate venv and run pytest.
 >> source .venv/bin/activate
 >> pytest
 
-# TODO
+## 🧪 Running Tests
 
-Check why rest_to_postgres.extract is failing.
-Look at the task logs for rest_to_postgres.extract. Likely causes:
+This project uses `pytest` and a `Makefile` to organize and run unit tests, integration tests, and end-to-end tests.
 
-    Bad connection (API / Postgres)
+### ✅ Unit Tests
+Run fast, isolated tests that do not interact with external systems (databases, APIs, etc.).
 
-    Credentials missing
+```bash
+make unit
 
-    Code error
+make integration
 
-    Schema mismatch
+make end_to_end
 
-    Timeout
-
-Similarly, check why postgres_to_redshift.validate_transform_load is retrying. The logs for this task will also tell you why it's failing.
-
+make test
 
 
-TODO - 
-focus on config loading and ensuring it’s handled correctly at runtime, passed as parameters, and not loaded at import/parse time
+Testing Summary:
+   - pytest.ini
+   - Makefile for easy commands
+   - CI/CD uses Makefile for easy testing integration
+   - Project and testing consistency
+
+
+unit tests:
+   - start venv >> source .venv/bin/activate
+   - bash >> make unit
+
+integration tests:
+   - Start up Docker/Airflow environment
+
+e2e tests:
