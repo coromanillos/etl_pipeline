@@ -1,4 +1,5 @@
 # conftest.py
+
 import os
 import yaml
 import pytest
@@ -6,23 +7,23 @@ import logging
 from src.utils.aws_client import get_s3_client
 from src.utils.db_client import get_postgres_connection
 from src.utils.redshift_client import get_redshift_connection
+from src.utils.postgres_cleaner import drop_all_tables, vacuum_postgres
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-
 # -----------------------------
-# Helper Function to Expand Env Vars
+# Build connection strings dynamically
 # -----------------------------
 
-def expand_env_vars(value):
-    if isinstance(value, str):
-        return os.path.expandvars(value)
-    if isinstance(value, dict):
-        return {k: expand_env_vars(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [expand_env_vars(i) for i in value]
-    return value
+def build_postgres_conn_string(cfg):
+    pg = cfg["postgres_loader"]
+    return f"postgresql://{pg['user']}:{pg['password']}@{pg['host']}:{pg['port']}/{pg['db']}"
+
+
+def build_redshift_conn_string(cfg):
+    rs = cfg["redshift"]
+    return f"postgresql://{rs['user']}:{rs['password']}@{rs['host']}:{rs['port']}/{rs['db']}"
 
 
 # -----------------------------
@@ -59,7 +60,7 @@ def ensure_test_postgres_schema(test_postgres_config):
     """
     Ensure the 'intraday_data' table exists before tests run in 'etl' schema.
     """
-    connection_string = test_postgres_config["postgres_loader"]["connection_string"]
+    connection_string = build_postgres_conn_string(test_postgres_config)
     schema = test_postgres_config["postgres_loader"]["schema"]
 
     create_schema_query = f"CREATE SCHEMA IF NOT EXISTS {schema};"
@@ -83,10 +84,11 @@ def ensure_test_postgres_schema(test_postgres_config):
             cur.execute(create_table_query)
         conn.commit()
 
+
 @pytest.fixture
 def clear_postgres_table():
     def _clear(config, table_name):
-        connection_string = config["postgres_loader"]["connection_string"]
+        connection_string = build_postgres_conn_string(config)
         schema = config["postgres_loader"]["schema"]
         with get_postgres_connection({"postgres_loader": {"connection_string": connection_string}}) as conn:
             with conn.cursor() as cur:
@@ -94,40 +96,25 @@ def clear_postgres_table():
             conn.commit()
     return _clear
 
+
 @pytest.fixture
 def drop_all_postgres_tables():
     """Drop all tables within a PostgreSQL schema."""
     def _drop(config, logger):
-        connection_string = config["postgres_loader"]["connection_string"]
-        schema = config["postgres_loader"]["schema"]
-
-        query = f"""
-            DO $$ DECLARE
-                r RECORD;
-            BEGIN
-                FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = '{schema}') LOOP
-                    EXECUTE 'DROP TABLE IF EXISTS {schema}.' || quote_ident(r.tablename) || ' CASCADE';
-                END LOOP;
-            END $$;
-        """
-        with get_postgres_connection({"postgres_loader": {"connection_string": connection_string}}) as conn:
-            with conn.cursor() as cur:
-                cur.execute(query)
-                conn.commit()
-                logger.info(f"✅ Dropped all tables in schema '{schema}'.")
+        # Build connection string dynamically
+        connection_string = build_postgres_conn_string(config)
+        config_with_conn = {"postgres_loader": {"connection_string": connection_string}}
+        drop_all_tables(config_with_conn, logger)
     return _drop
 
 
 @pytest.fixture
-def vacuum_postgres():
+def vacuum_postgres_fixture():
     """Run VACUUM FULL on PostgreSQL."""
     def _vacuum(config, logger):
-        connection_string = config["postgres_loader"]["connection_string"]
-        with get_postgres_connection({"postgres_loader": {"connection_string": connection_string}}) as conn:
-            with conn.cursor() as cur:
-                cur.execute("VACUUM FULL;")
-                conn.commit()
-                logger.info("✅ VACUUM FULL executed successfully.")
+        connection_string = build_postgres_conn_string(config)
+        config_with_conn = {"postgres_loader": {"connection_string": connection_string}}
+        vacuum_postgres(config_with_conn, logger)
     return _vacuum
 
 
@@ -139,7 +126,7 @@ def vacuum_postgres():
 def clear_redshift_table():
     """Drop a Redshift table before tests."""
     def _clear(config, table_name):
-        connection_string = config["redshift"]["connection_string"]
+        connection_string = build_redshift_conn_string(config)
         schema = config["redshift"]["schema"]
         query = f"DROP TABLE IF EXISTS {schema}.{table_name};"
         with get_redshift_connection({"redshift": {"connection_string": connection_string}}) as conn:

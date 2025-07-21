@@ -1,3 +1,5 @@
+# tests/unit/test_postgres_extractor.py
+
 import pytest
 import pandas as pd
 from unittest.mock import MagicMock, patch
@@ -5,7 +7,7 @@ from src.utils.postgres_extractor import get_all_table_names, extract_table_data
 
 @pytest.fixture
 def mock_config():
-    return {"postgres_loader": {"connection_string": "postgresql://...", "schema": "public"}}
+    return {"postgres_loader": {"connection_string": "postgresql://user:pass@localhost/db", "schema": "public"}}
 
 def test_get_all_table_names_success(mock_config):
     mock_cursor = MagicMock()
@@ -14,7 +16,7 @@ def test_get_all_table_names_success(mock_config):
     mock_conn = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-    mock_factory = MagicMock(return_value=MagicMock(__enter__=lambda x: mock_conn, __exit__=MagicMock()))
+    mock_factory = MagicMock(return_value=MagicMock(__enter__=lambda s: mock_conn, __exit__=MagicMock()))
 
     tables = get_all_table_names(mock_config, conn_factory=mock_factory)
 
@@ -32,7 +34,7 @@ def test_extract_table_data_success(mock_read_sql, mock_as_string, mock_config):
     mock_read_sql.return_value = pd.DataFrame({"a": [1], "b": [2]})
 
     mock_conn = MagicMock()
-    mock_factory = MagicMock(return_value=MagicMock(__enter__=lambda x: mock_conn, __exit__=MagicMock()))
+    mock_factory = MagicMock(return_value=MagicMock(__enter__=lambda s: mock_conn, __exit__=MagicMock()))
 
     result = extract_table_data("table_name", mock_config, conn_factory=mock_factory)
     assert isinstance(result, pd.DataFrame)
@@ -50,4 +52,3 @@ def test_extract_table_data_failure(mock_read_sql, mock_config):
 
     assert isinstance(result, pd.DataFrame)
     assert result.empty
-

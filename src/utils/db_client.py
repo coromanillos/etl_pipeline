@@ -10,13 +10,13 @@ import psycopg2
 
 logger = logging.getLogger(__name__)
 
+def build_postgres_conn_string(cfg: dict) -> str:
+    pg = cfg["postgres_loader"]
+    return f"postgresql://{pg['user']}:{pg['password']}@{pg['host']}:{pg['port']}/{pg['db']}"
+
 def get_postgres_connection(config: dict, connector_fn=psycopg2.connect):
-    """
-    Returns a Postgres connection using the provided config and optional connector function.
-    Supports dependency injection for testing.
-    """
     try:
-        database_url = config["postgres_loader"]["connection_string"]
+        database_url = build_postgres_conn_string(config)
         logger.debug(f"Connecting to PostgreSQL at: {database_url}")
         return connector_fn(database_url)
     except Exception as e:

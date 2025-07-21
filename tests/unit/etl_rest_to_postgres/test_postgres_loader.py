@@ -2,7 +2,6 @@
 
 import pytest
 from unittest.mock import MagicMock
-from datetime import datetime
 from src.etl_rest_to_postgres.postgres_loader import load_data
 
 @pytest.fixture
@@ -25,12 +24,12 @@ def sample_data():
             "volume": "10000"
         },
         {
-            # Missing required field "volume"
             "timestamp": "2025-07-06T13:00:00",
             "open": "101",
             "high": "111",
             "low": "96",
             "close": "106"
+            # volume missing
         }
     ]
 
@@ -45,7 +44,7 @@ def test_load_data_success(sample_data, config):
 
     inserted = load_data(sample_data, config, session_factory=mock_factory)
 
-    # Only 1 record is valid (first one)
+    # Only 1 valid record should be inserted
     assert inserted == 1
     assert mock_session.bulk_save_objects.call_count == 1
     assert mock_session.commit.call_count == 1
@@ -55,8 +54,7 @@ def test_load_data_empty_input(config):
     assert result == 0
 
 def test_load_data_no_valid_records(config):
-    # All invalid records (missing required fields)
-    invalid_data = [{"timestamp": "2025-07-06T12:00:00"}]
+    invalid_data = [{"timestamp": "2025-07-06T12:00:00"}]  # missing required fields
     result = load_data(invalid_data, config)
     assert result == 0
 

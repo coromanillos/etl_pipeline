@@ -1,7 +1,7 @@
 # tests/unit/test_db_session.py
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from sqlalchemy.exc import SQLAlchemyError
 from src.utils.db_session import get_db_session
 

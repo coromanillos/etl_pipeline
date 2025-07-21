@@ -1,16 +1,14 @@
 ###################################################
 # Title: postgres_cleanup.py
 # Description: Cleans up PostgreSQL after pipeline
-# Date: 2025-07-20 | Version: 3.3 (runtime-safe, clean logging)
+# Date: 2025-07-20 | Version: 4.0 (DRY, uses shared utilities)
 ###################################################
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-
 from src.utils.slack_alert import slack_failed_task_alert
-from src.etl_cleanup_postgres_after_archive.table_cleaner import drop_all_tables
-from src.etl_cleanup_postgres_after_archive.vacuum_executor import vacuum_postgres
+from src.utils.postgres_cleaner import drop_all_tables, vacuum_postgres
 from src.etl_cleanup_postgres_after_archive.cleanup_logger import log_cleanup_summary
 from src.etl_cleanup_postgres_after_archive.cleanup_config_loader import load_cleanup_config
 

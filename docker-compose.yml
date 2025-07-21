@@ -20,8 +20,11 @@ x-airflow-common: &airflow-common
     - ./airflow/dags:/app/airflow/dags
     - ./airflow/plugins:/app/airflow/plugins
     - ./config:/app/config:ro
+    - ./config:/opt/airflow/config:ro
     - airflow_logs:/app/logs
     - airflow_plugins:/app/plugins
+    - ./src:/app/src
+
   networks:
     - etl_net
   depends_on:
