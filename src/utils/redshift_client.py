@@ -12,7 +12,12 @@ logger = logging.getLogger(__name__)
 
 def get_redshift_connection(config: dict, connector_fn=psycopg2.connect):
     try:
-        connection_string = config["redshift"]["connection_string"]
+        redshift_cfg = config["redshift"]
+        # Build connection string dynamically
+        connection_string = (
+            f"postgresql://{redshift_cfg['user']}:{redshift_cfg['password']}@"
+            f"{redshift_cfg['host']}:{redshift_cfg['port']}/{redshift_cfg['db']}"
+        )
         logger.info("🔗 Connecting to Redshift.")
         return connector_fn(connection_string)
     except Exception as e:

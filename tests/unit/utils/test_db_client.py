@@ -1,9 +1,10 @@
+# tests/unit/test_db_client.py
+
 import pytest
 from unittest.mock import MagicMock, patch
 from src.utils.db_client import get_postgres_connection
 
 def test_get_postgres_connection_success():
-    """Test successful Postgres connection creation."""
     mock_connect = MagicMock()
     config = {"postgres_loader": {"connection_string": "postgresql://user:pass@localhost:5432/db"}}
 
@@ -14,7 +15,6 @@ def test_get_postgres_connection_success():
 
 @patch("src.utils.db_client.logger")
 def test_get_postgres_connection_failure(mock_logger):
-    """Test failure in Postgres connection raises and logs error."""
     def failing_connect(_):
         raise Exception("boom")
 

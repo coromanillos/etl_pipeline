@@ -12,24 +12,18 @@ from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 
-def get_db_session(config: dict, engine_factory=create_engine, session_factory=sessionmaker):
-    """
-    Returns a SQLAlchemy session factory using injected engine and session factories.
+def build_postgres_conn_string(cfg: dict) -> str:
+    pg = cfg["postgres_loader"]
+    return f"postgresql://{pg['user']}:{pg['password']}@{pg['host']}:{pg['port']}/{pg['db']}"
 
-    Args:
-        config (dict): Config containing 'postgres_loader.connection_string'.
-        engine_factory (callable): Dependency-injected engine creation (default: create_engine).
-        session_factory (callable): Dependency-injected sessionmaker (default: sessionmaker).
-    Returns:
-        A session factory (callable) for creating SQLAlchemy sessions.
-    """
+def get_db_session(config: dict, engine_factory=create_engine, session_factory=sessionmaker):
     if not config:
         raise ValueError("❌ No config provided to get_db_session()")
 
     try:
-        database_url = config["postgres_loader"]["connection_string"]
-    except KeyError:
-        logger.error("❌ 'connection_string' not found in config['postgres_loader']", exc_info=True)
+        database_url = build_postgres_conn_string(config)
+    except KeyError as e:
+        logger.error(f"❌ Missing key in config to build connection string: {e}", exc_info=True)
         raise
 
     try:

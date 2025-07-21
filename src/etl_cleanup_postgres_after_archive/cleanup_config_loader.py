@@ -10,6 +10,7 @@ from src.utils.config import load_config
 
 
 def load_cleanup_config(config_path: str = None) -> dict:
-    # Defer config path resolution to runtime
     path = config_path or os.getenv("POSTGRES_CLEANUP_CONFIG_PATH", "/opt/airflow/config/cleanup_config.yaml")
+    print(f"[DEBUG] Loading cleanup config from: {path}")
     return load_config(path)
+

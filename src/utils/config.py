@@ -21,13 +21,14 @@ def load_config(config_path: str = None, loader=yaml.safe_load) -> dict:
         with open(config_path, "r") as file:
             config = loader(file)
         logger.info(f"✅ Loaded YAML config from: {config_path}")
-        return config
+        return expand_env_vars(config)
     except FileNotFoundError:
         logger.error(f"❌ Config file not found: {config_path}", exc_info=True)
         raise
     except yaml.YAMLError as e:
         logger.error(f"❌ YAML parsing error: {e}", exc_info=True)
         raise
+
 
 def get_env_var(key: str, required: bool = True, getter=os.getenv) -> str:
     value = getter(key)
@@ -40,4 +41,13 @@ def get_env_var(key: str, required: bool = True, getter=os.getenv) -> str:
             logger.warning(msg)
     else:
         logger.debug(f"🔑 Loaded env var: {key}")
+    return value
+
+def expand_env_vars(value):
+    if isinstance(value, str):
+        return os.path.expandvars(value)
+    if isinstance(value, dict):
+        return {k: expand_env_vars(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [expand_env_vars(i) for i in value]
     return value
