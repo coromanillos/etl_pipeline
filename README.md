@@ -195,5 +195,7 @@ unit tests:
 
 integration tests:
    - Start up Docker/Airflow environment
-
+   - bash >> docker compose build --no-cache
+   - bash >> docker compose up -d
+   
 e2e tests:
