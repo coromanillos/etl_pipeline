@@ -1,14 +1,14 @@
 # tests/utils/test_postgres_cleaner.py
 
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 from src.utils.postgres_cleaner import drop_all_tables, vacuum_postgres
 
 
 @pytest.fixture
 def mock_conn_cursor():
-    mock_cursor = Mock()
-    mock_conn = Mock()
+    mock_cursor = MagicMock()
+    mock_conn = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
     return mock_conn, mock_cursor
 
@@ -34,10 +34,10 @@ def test_drop_all_tables_executes_expected_sql(mock_get_conn, mock_conn_cursor):
 
 @patch("src.utils.postgres_cleaner.get_postgres_connection")
 def test_vacuum_postgres_executes_vacuum_full(mock_get_conn):
-    mock_conn = Mock()
-    mock_cursor = Mock()
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-    mock_get_conn.return_value = mock_conn  # No context manager anymore
+    mock_get_conn.return_value = mock_conn
 
     config = {
         "postgres_loader": {
