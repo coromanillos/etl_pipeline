@@ -1,6 +1,6 @@
 # ETL Pipeline for Alpha Vantage Stock Data 📈
 
-A production-ready ETL pipeline that extracts, transforms, and loads stock market data from the Alpha Vantage API into a PostgreSQL database. The pipeline is fully containerized with Docker, orchestrated using Apache Airflow, and includes automated logging and testing.
+A production-ready ETL pipeline that extracts, transforms, and loads stock market data from the [Alpha Vantage API](https://www.alphavantage.co/#about) into a PostgreSQL database. The pipeline is fully containerized with Docker, orchestrated using Apache Airflow, and includes automated logging and testing.
 
 ---
 
@@ -14,8 +14,6 @@ A production-ready ETL pipeline that extracts, transforms, and loads stock marke
 - [Getting Started](#getting-started)
 - [Running the Pipeline](#running-the-pipeline)
 - [Running Tests](#running-tests)
-- [Future Enhancements](#future-enhancements)
-- [Contributors](#contributors)
 
 ---
 
@@ -99,8 +97,8 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/savings-bank-pipeline.git
-cd savings-bank-pipeline
+git clone https://github.com/your-username/etl_pipeline.git
+cd etl_pipeline
 
 # Create virtual environment
 python -m venv .venv
