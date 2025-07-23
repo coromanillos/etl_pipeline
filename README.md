@@ -1,10 +1,10 @@
-# 📈 ETL Pipeline for Alpha Vantage Stock Data
+# ETL Pipeline for Alpha Vantage Stock Data 📈
 
 A production-ready ETL pipeline that extracts, transforms, and loads stock market data from the Alpha Vantage API into a PostgreSQL database. The pipeline is fully containerized with Docker, orchestrated using Apache Airflow, and includes automated logging and testing.
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents 📌
 
 - [Overview](#overview)
 - [Features](#features)
@@ -19,7 +19,7 @@ A production-ready ETL pipeline that extracts, transforms, and loads stock marke
 
 ---
 
-## 🧠 Overview
+## Overview 🧠
 
 This project demonstrates a real-world ETL pipeline, built with best practices in mind for data engineering workflows. It includes:
 
@@ -30,7 +30,7 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ---
 
-## 🚀 Features
+## Features 🚀
 
 - 🔌 Connects to multiple APIs and internal data files
 - 🔄 Handles API rate limits and retries
@@ -42,28 +42,28 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ---
 
-## 🏗️ Architecture
+## Architecture 🏗️
 
-### 1. **Extraction**
+### 1. Extraction
 - Uses `requests` to extract API data with retry/backoff
 - Reads internal CSV/JSON using `pandas`
 
-### 2. **Transformation**
+### 2. Transformation
 - Cleans and normalizes fields
 - Converts timestamps to UTC
 - Handles nulls, duplicates, and categoricals
 
-### 3. **Loading**
+### 3. Loading
 - Uses `sqlalchemy` or `psycopg2` to load data into PostgreSQL or cloud warehouses
 - Maintains audit logs for inserts
 
-### 4. **Scheduling & Orchestration**
+### 4. Scheduling & Orchestration
 - Orchestrated with **Apache Airflow** or scheduled with `cron`
-- Logging handled by `loguru` or Python’s `logging` module
+- Logging handled by `loguru` or Python’s built-in `logging`
 
 ---
 
-## 📊 Data Sources
+## Data Sources 📊
 
 ### ✅ API: Transaction Records (CSV)
 - **Endpoint:** `https://api.bank.com/transactions`
@@ -83,7 +83,7 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack 🛠️
 
 - **Language:** Python 3.11
 - **Libraries:** `pandas`, `requests`, `sqlalchemy`, `psycopg2`, `loguru`
@@ -95,7 +95,7 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ---
 
-## ⚙️ Getting Started
+## Getting Started ⚙️
 
 ```bash
 # Clone the repo
