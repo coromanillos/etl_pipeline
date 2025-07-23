@@ -4,7 +4,7 @@ A production-ready ETL pipeline that extracts, transforms, and loads stock marke
 
 ---
 
-## Table of Contents 📌
+## Table of Contents 
 
 - [Overview](#overview)
 - [Features](#features)
@@ -19,7 +19,7 @@ A production-ready ETL pipeline that extracts, transforms, and loads stock marke
 
 ---
 
-## Overview 🧠
+## Overview 
 
 This project demonstrates a real-world ETL pipeline, built with best practices in mind for data engineering workflows. It includes:
 
@@ -30,19 +30,19 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ---
 
-## Features 🚀
+## Features 
 
-- 🔌 Connects to multiple APIs and internal data files
-- 🔄 Handles API rate limits and retries
-- 🧹 Cleans and normalizes raw financial data
-- 📦 Loads to a cloud data warehouse (PostgreSQL, Redshift, or Snowflake)
-- 📅 Automated weekly runs with Airflow or `cron`
-- 🔍 Full logging and auditing for each step
-- 🧪 Includes unit, integration, and end-to-end tests
+-  Connects to multiple APIs and internal data files
+-  Handles API rate limits and retries
+-  Cleans and normalizes raw financial data
+-  Loads to a cloud data warehouse (PostgreSQL, Redshift, or Snowflake)
+-  Automated weekly runs with Airflow or `cron`
+-  Full logging and auditing for each step
+-  Includes unit, integration, and end-to-end tests
 
 ---
 
-## Architecture 🏗️
+## Architecture 
 
 ### 1. Extraction
 - Uses `requests` to extract API data with retry/backoff
@@ -63,27 +63,27 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ---
 
-## Data Sources 📊
+## Data Sources 
 
-### ✅ API: Transaction Records (CSV)
+###  API: Transaction Records (CSV)
 - **Endpoint:** `https://api.bank.com/transactions`
 - **Fields:** `transaction_id`, `account_number`, `amount`, `timestamp`, `category`
 - **Auth:** API Key
 
-### ✅ API: Customer Info (JSON)
+###  API: Customer Info (JSON)
 - **Endpoint:** `https://api.bank.com/customers`
 - **Fields:** `customer_id`, `name`, `dob`, `address`, `phone_number`, `email`
 - **Auth:** OAuth 2.0
 
-### ✅ Internal CSV: Savings Account Data
+###  Internal CSV: Savings Account Data
 - **Path:** `/data/savings_accounts.csv`
 
-### ✅ Internal JSON: Customer Metadata
+###  Internal JSON: Customer Metadata
 - **Path:** `/data/customers_metadata.json`
 
 ---
 
-## Tech Stack 🛠️
+## Tech Stack 
 
 - **Language:** Python 3.11
 - **Libraries:** `pandas`, `requests`, `sqlalchemy`, `psycopg2`, `loguru`
@@ -95,7 +95,7 @@ This project demonstrates a real-world ETL pipeline, built with best practices i
 
 ---
 
-## Getting Started ⚙️
+## Getting Started 
 
 ```bash
 # Clone the repo
