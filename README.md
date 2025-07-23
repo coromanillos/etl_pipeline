@@ -1,201 +1,117 @@
-# README - Savings Bank Data Pipeline Project
+# 📈 ETL Pipeline for Alpha Vantage Stock Data
 
-## Project Overview
+A production-ready ETL pipeline that extracts, transforms, and loads stock market data from the Alpha Vantage API into a PostgreSQL database. The pipeline is fully containerized with Docker, orchestrated using Apache Airflow, and includes automated logging and testing.
 
-Asdf test savings bank employer has tasked you with designing a data pipeline that extracts data from a data source, perform weekly ETL tasks to clean and process the data, and upload data to a cloud data warehouse. The extracted data comes from the following source:
+---
 
-- **Alpha Vantage REST API**
+## 📌 Table of Contents
 
-## Requirements
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Data Sources](#data-sources)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Running the Pipeline](#running-the-pipeline)
+- [Running Tests](#running-tests)
+- [Future Enhancements](#future-enhancements)
+- [Contributors](#contributors)
 
-### Functional Requirements
+---
 
-- Extract data from:
-  - API (JSON format)
-- Transform and clean the data:
-  - Handle missing or incorrect values
-  - Normalize and structure data consistently
-  - Ensure referential integrity between datasets
-- Load transformed data into a cloud data warehouse (e.g., AWS Redshift, Snowflake, Google BigQuery)
-- Schedule pipeline execution to run weekly
-- Maintain logging and monitoring for debugging and performance tracking
+## 🧠 Overview
 
-### Non-Functional Requirements
+This project demonstrates a real-world ETL pipeline, built with best practices in mind for data engineering workflows. It includes:
 
-- Pipeline should be modular and extensible
-- Ensure data security and compliance with banking regulations
-- Optimize performance for large datasets
-- Handle API rate limits and failures gracefully
+- Data ingestion from multiple formats (JSON, CSV)
+- Automated transformations and validation
+- Cloud-ready loading strategies
+- Modular, testable, and containerized codebase
 
-## Data Sources
+---
 
-### API 1 - Transaction Records (CSV Format)
+## 🚀 Features
 
-- Endpoint: `https://api.bank.com/transactions`
-- Fields: `transaction_id`, `account_number`, `amount`, `timestamp`, `category`
-- Authentication: API key required
+- 🔌 Connects to multiple APIs and internal data files
+- 🔄 Handles API rate limits and retries
+- 🧹 Cleans and normalizes raw financial data
+- 📦 Loads to a cloud data warehouse (PostgreSQL, Redshift, or Snowflake)
+- 📅 Automated weekly runs with Airflow or `cron`
+- 🔍 Full logging and auditing for each step
+- 🧪 Includes unit, integration, and end-to-end tests
 
-### API 2 - Customer Information (JSON Format)
+---
 
-- Endpoint: `https://api.bank.com/customers`
-- Fields: `customer_id`, `name`, `dob`, `address`, `phone_number`, `email`
-- Authentication: OAuth 2.0
+## 🏗️ Architecture
 
-### Internal CSV File - Savings Account Data
+### 1. **Extraction**
+- Uses `requests` to extract API data with retry/backoff
+- Reads internal CSV/JSON using `pandas`
 
-- Path: `/data/savings_accounts.csv`
-- Fields: `account_number`, `customer_id`, `balance`, `account_type`, `last_updated`
+### 2. **Transformation**
+- Cleans and normalizes fields
+- Converts timestamps to UTC
+- Handles nulls, duplicates, and categoricals
 
-### Internal JSON File - Customer Metadata
+### 3. **Loading**
+- Uses `sqlalchemy` or `psycopg2` to load data into PostgreSQL or cloud warehouses
+- Maintains audit logs for inserts
 
-- Path: `/data/customers_metadata.json`
-- Fields: `customer_id`, `risk_score`, `credit_rating`, `loan_eligibility`
+### 4. **Scheduling & Orchestration**
+- Orchestrated with **Apache Airflow** or scheduled with `cron`
+- Logging handled by `loguru` or Python’s `logging` module
 
-## Pipeline Architecture
+---
 
-### 1. Extraction
+## 📊 Data Sources
 
-- Use Python’s `requests` library to extract data from APIs.
-- Read CSV and JSON files using `pandas`.
-- Implement retries and exponential backoff for API calls.
+### ✅ API: Transaction Records (CSV)
+- **Endpoint:** `https://api.bank.com/transactions`
+- **Fields:** `transaction_id`, `account_number`, `amount`, `timestamp`, `category`
+- **Auth:** API Key
 
-### 2. Transformation
+### ✅ API: Customer Info (JSON)
+- **Endpoint:** `https://api.bank.com/customers`
+- **Fields:** `customer_id`, `name`, `dob`, `address`, `phone_number`, `email`
+- **Auth:** OAuth 2.0
 
-- Convert all timestamps to UTC format.
-- Remove duplicate records and handle null values.
-- Standardize categorical fields (e.g., account types, transaction categories).
-- Ensure customer IDs and account numbers match across datasets.
+### ✅ Internal CSV: Savings Account Data
+- **Path:** `/data/savings_accounts.csv`
 
-### 3. Loading
+### ✅ Internal JSON: Customer Metadata
+- **Path:** `/data/customers_metadata.json`
 
-- Use `psycopg2` or `sqlalchemy` to insert records into the cloud data warehouse.
-- Maintain an audit log of inserted records.
+---
 
-### 4. Scheduling & Automation
+## 🛠️ Tech Stack
 
-- Use Apache Airflow or `cron` to schedule weekly execution.
-- Implement logging with `loguru` or Python’s built-in `logging` module.
+- **Language:** Python 3.11
+- **Libraries:** `pandas`, `requests`, `sqlalchemy`, `psycopg2`, `loguru`
+- **Containerization:** Docker, Docker Compose
+- **Orchestration:** Apache Airflow, cron
+- **Storage:** PostgreSQL, AWS S3, Redshift, Snowflake
+- **Monitoring:** ELK Stack, Prometheus (optional)
+- **Testing:** `pytest`, `Makefile`
 
-## Tech Stack
+---
 
-- **Containerization:** Docker (for creating, deploying, and running applications in containers, ensuring consistency across environments)
-- **Programming Language:** Python
-- **Libraries:** `requests`, `pandas`, `sqlalchemy`, `psycopg2`, `pyarrow`
-- **Orchestration:** Apache Airflow / Cron Jobs
-- **Storage & Processing:** AWS S3, Google Cloud Storage, Snowflake, AWS Redshift
-- **Logging & Monitoring:** `loguru`, Prometheus, ELK Stack
-
-## Deployment & Execution
-
-1. Clone this repository:
-   ```sh
-   git clone https://github.com/your-repo/savings-bank-pipeline.git
-   ```
-2. Set up a virtual environment:
-   ```sh
-   python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```sh
-   pip install -r requirements.txt
-   ```
-4. Set up environment variables (API keys, database credentials) in a `.env` file.
-5. Run the pipeline manually for testing:
-   ```sh
-   python run_pipeline.py
-   ```
-6. Deploy to an orchestration tool (Airflow, cron job).
-
-## Future Enhancements
-
-- Implement data validation checks before loading into the warehouse.
-- Add streaming capabilities for real-time processing.
-- Integrate anomaly detection for fraudulent transactions.
-- Implement data validation checks.
-- Add support for additional data sources.
-- Optimize database indexing for performance.
-
-## Contributors
-
-- **[Christopher Romanillos]** - Data Engineer
-- **Savings Bank IT Team**
-
-
-## Running Integration Tests in Docker
-
-Make sure your `.env` file is properly configured.
-
-### Step 1: Build and run services + integration tests
+## ⚙️ Getting Started
 
 ```bash
+# Clone the repo
+git clone https://github.com/your-username/savings-bank-pipeline.git
+cd savings-bank-pipeline
 
-docker compose -f docker-compose.yml -f docker-compose.test.yml up --build --abort-on-container-exit test_runner
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
+# Install dependencies
+pip install -r requirements.txt
 
+# Set up environment variables
+cp .env.example .env
+# Fill in API keys, database URIs, etc.
 
-docker compose down -v
-docker volume prune
-
-docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
-
-AUDIT - Any files wit so they are consistent with docker-compose.yml and .env.
-LOCALSTACK_VOLUME_DIR
-DATA_DIR
-
-# Integration testing:
-exit venv, run integration tests completeling within docker.
-
-docker compose down -v
-docker compose build --no-cache
-docker compose up -d
-
-
-# Unit testing: 
-activate venv and run pytest.
-
->> source .venv/bin/activate
->> pytest
-
-# Integration testing:
-
->> docker compose up -d 
->> docker compose exec airflow-webserver bash
->> source .venv/bin/activate
->> pytest
-
-## 🧪 Running Tests
-
-This project uses `pytest` and a `Makefile` to organize and run unit tests, integration tests, and end-to-end tests.
-
-### ✅ Unit Tests
-Run fast, isolated tests that do not interact with external systems (databases, APIs, etc.).
-
-```bash
-make unit
-
-make integration
-
-make end_to_end
-
-make test
-
-
-Testing Summary:
-   - pytest.ini
-   - Makefile for easy commands
-   - CI/CD uses Makefile for easy testing integration
-   - Project and testing consistency
-
-
-unit tests:
-   - start venv >> source .venv/bin/activate
-   - bash >> make unit
-
-integration tests:
-   - Start up Docker/Airflow environment
-   - bash >> docker compose build --no-cache
-   - bash >> docker compose up -d
-   
-e2e tests:
+# Run manually (optional)
+python run_pipeline.py
