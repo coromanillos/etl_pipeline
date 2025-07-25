@@ -83,13 +83,15 @@ This ETL pipeline runs in **two main stages**, each with its own extraction, tra
 - Converts query results into pandas DataFrames
 
 #### 2. Transformation
-- Cleans and deduplicates records
-- Converts data into columnar **Parquet format** for efficient cloud storage
+- Allows for further cleaning depending on user needs
+- Converts data into columnar **Parquet format** for storage and cost efficient cloud storage
 - Adds partitioning metadata (e.g., `symbol`, `date`) if applicable
 
 #### 3. Loading
-- Uploads Parquet files to **AWS S3** (Data Lake)
-- Loads Parquet into **Amazon Redshift** (Data Warehouse) using COPY command
+- Consists of two seperate DAGs that load data to S3 and Redshift respectively,
+    - This eliminates the cost that would be incurred if data was loaded from S3 to Redshift*
+    - Modular approach, add or remove a DAG as needed.
+- Loads Parquet files, being sure to open only when needed, then close as soons as the operation completes. Optimal cost per opened
 - Each step includes error handling and logging for observability
 
 ---
@@ -134,14 +136,8 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
-# Fill in API keys, database URIs, etc.
-
-# Run manually (optional)
-python run_pipeline.py
-
 ```
 
 ## Future Features
+- Working with data that requires a NoSQL database (MongoDB)
+- Different cloud provider GCS?
